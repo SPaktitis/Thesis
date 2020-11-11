@@ -102,27 +102,52 @@ for k = 1:sc
         
         
         indexes=[];
-        Fi = [];
-        rm = R(:,j*N-1);
+        Ft = [];
+        rm = R(:,j*N-1:j*N);
         %find the sc - |Omegac_est| columns we need
-        for i=1 : length(Omegai(j,:))-length(Omegac)
+        for i=1 : length(Omegai(j,:))-length(Omegac_est)
             %Modified OMP to solve problem at A for 1 user            
             for l=1:M
-                tmp1(l) = abs(dot( X_hat(:,l)' , rm) );
-                %tmp1(l) = norm( (X_hat(:,l)' * rm), 'fro' );
+                %tmp2(l) = abs(dot( X_hat(:,l)' , rm(:,1)) );
+                tmp1(l) = sqrt( norm(X_hat(:,l)' * rm(:,1))^2 + norm(X_hat(:,l)' * rm(:,2))^2 ); 
+                %tmp3(l) = norm( (X_hat(:,l)' * rm), 'fro' );
             end 
         
             [value , index] = max(tmp1);
             
             indexes = [indexes index];
             
-            Fi = [Fi X_hat(:,index)];
+            Ft = [Ft X_hat(:,index)];
         
-            x2t = pinv(Fi) * R(:,j*N-1);
-            at = Fi * x2t;
-            rm = R(:,j*N-1) - at;
+            x2t = pinv(Ft) * R(:,j*N-1:j*N);
+            at = Ft * x2t;
+            rm = R(:,j*N-1:j*N) - at;
         end        
-    
+        
+%         E=[];
+%         Matrix=[];
+%         %testing
+%         t=0;
+%         while(1)
+%            for i=1:M
+%                tmp(i) = abs( dot( X_hat(:,i) , rm(:,1) ) );
+%            end
+%            [t1,lt] = max(tmp);
+%            E = [E lt];
+%            Matrix = [Matrix X_hat(:,lt)];
+%            xt = pinv(Matrix) * R(:,j*N-1);
+%            am = Matrix * xt;
+%            rm = R(:,j*N-1) - am;
+%            
+%            t=t+1;
+%            
+%            if( norm(rm) <= 10^-4 )
+%                break;
+%            end
+%         end    
+        
+        
+        
         %====== B (Support pruning)
         l=[];
         for i=1:length(indexes)
@@ -160,7 +185,7 @@ for k = 1:sc
     Omegac_est = [Omegac_est paths(index)];
     
     %======== D(Residual update)
-    L = X_hat(:,Omegac_est) *pinv(X_hat(:,Omegac_est));
+    L = X_hat(:,Omegac_est) * pinv(X_hat(:,Omegac_est));
     
     for ii=1:K
        R( :, ii*N-1:ii*N ) = abs ( ( diag( ones( length(X_hat(:,1)) ,1) ) - L ) * Y_hat(:,ii*N-1:ii*N) );
