@@ -1,0 +1,179 @@
+clc;
+clear;
+
+M=160;              %transmit antennas
+N=2;                %receive antennas
+K=40;               %number of users
+sc=9;               %common sparsity parameter
+s=17;               %individual sparsity parameter
+P=28;               %transmit SNR in dB
+eta1=0.2;           %parameters used 
+eta2=2;             %in JOMP alg.
+Dt=1/2;             %antenna spacing
+Dr=1/2;             %antennas spacing
+Lt=round(M/2);      %Transmit antenna length 
+Lr=round(N/2);      %Receive antenna length
+T=50;               %number of pilot symbols
+
+
+
+%Creation of angular basis matrix At and Ar
+e=[];
+At=[];
+for k=1:M
+    for a=1:M
+        tmp1 = exp(-1i*2*pi*(a-1)*Dt*(k-1)/Lt);
+        e = [e;    tmp1];
+    end
+    et = 1/sqrt(M) .* e;
+    At = [At  et];
+    e=[];
+    et=[];
+end
+
+e=[];
+Ar=[];
+for k=1:N
+    for a=1:N
+        tmp1 = exp(-1i*2*pi*(a-1)*Dr*(k-1)/Lr);
+        e = [e;    tmp1];
+    end
+    er = 1/sqrt(N) .* e;
+    Ar = [Ar  er];
+    e=[];
+    er=[];
+end
+
+%Pilot matrix X
+Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1));
+X = At * Xa;
+
+
+
+%Creation of the concatenated 
+%Channel matrix Hw for K users
+Hw=zeros(N*K,M);
+Omegai=[];
+Omegac=randi([1 M],sc,1);
+for i=1:K
+   Omegai(i,:) = randi([1 M],s,1);
+   Hw(i*N-1:i*N , Omegac(:))    = 1; 
+   Hw(i*N-1:i*N , Omegai(i,:))  = 1;  
+end
+
+%altarnative method for Hw??
+% Hw=[];
+% for i=1:K
+%     tmp=zeros(N,M);
+%     Omegai(i,:) = randi([1 M],s-sc,1);
+%     tmp(:,Omegai(i,:)) = 1;
+%     tmp(:,Omegac) = 1;
+%     Hw = [Hw; tmp];
+% end
+
+
+%Creation of the concatenated channel matrix
+%Hi for all K users
+H = [];
+for i=1:K
+    H = [H; Ar * Hw(i*N-1:i*N,:) *At ];
+end
+%===========================================
+%Beggining of the algorithm
+
+%step1
+%Calculate hat amounts
+X_hat = sqrt(M/(P*T)) .* (X' *At);
+H_hat = Hw' ;
+Y_hat = X_hat * H_hat;
+%N_hat = sqrt(M/(P*T)) .* N' *Ar;
+
+
+R = abs(Y_hat); %periexei migadika skoupidia
+Fi = [];
+Omegac_est = [];
+
+for k = 1:sc
+    
+    %h logikh auth pisteuw douleuei giati o pinakas X kai X_hat einai full rank
+
+    Omegai_est={};
+    paths = [];
+    times = [];
+    for j = 1:K %for each user calculate Omegai_est
+        
+        
+        
+        %===============Alpha
+        tmp=[];
+        for i=1:M
+            tmp(i,1) = norm((X_hat(:,i)' *R(:, j*N-1:j*N) ), 'fro');  %abs(dot(rm,Fi(:,i))); 
+        end
+        
+        value=0;
+        index=0;
+        indexes=[];
+        %find the sc - |Omegac_est| columns we need
+        for i=1 : length(Omegai(j,:))-length(Omegac)
+            [value,index]=max(tmp);
+            indexes = [indexes index];
+            tmp(index) = 0;   %gia na mhn vriskei to idio megisto olh thn wra
+        end        
+        %h timh ths posothtas sto "A" vhma
+        %norm( (X_hat(:,sort(Omega_i_est))' *R), 'fro') 
+    
+        %====== B (Support pruning)
+        l=[];
+        for i=1:length(indexes)
+            if(  norm(X_hat(:,indexes)' *R , 'fro')^2 >= (eta1*N) ) 
+                l = [l indexes(i)]; 
+            end    
+        end
+        
+        %Update Omegai_est matrix
+        if ( isempty(Omegai_est) )
+            Omegai_est = {l};
+        else
+            Omegai_est = [Omegai_est; {l}];
+        end
+        
+        %the following if/else is implementing the step C(Support Update)
+        %update paths and times matrices
+        if( isempty(paths) )
+            paths = l;
+            times = ones( 1,length(paths) );
+        else
+            for i=1:length(l) %for each element in vector l
+               flag = 0;
+               for ii = 1:length(paths)
+                   if ( paths(1,ii) == l(i) ) %if the path allready exists
+                       times(1,ii) = times(1,ii)+1;
+                       flag =1;
+                   end %endif
+               end %endfor paths matrix
+               
+               % not(flag) := element l(i) is not in paths matrix
+               if( not(flag) )
+                   paths = [paths l(i)];
+                   times = [times 1];
+               end    
+            end %endfor l matrix            
+        end 
+    end
+    %======= C(Support Update)
+    [value , index] = max(times);
+    Omegac_est = [Omegac_est paths(index)];
+    
+    P =[];
+    %======== D(Residual update)
+    P = X_hat(:,Omegac_est) *pinv(X_hat(:,Omegac_est));
+    
+    for ii=1:K
+       R( :, ii*N-1:ii*N ) = ()
+    end
+    
+    
+end
+
+
+

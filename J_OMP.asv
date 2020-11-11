@@ -1,0 +1,159 @@
+clc;
+clear;
+
+M=160;              %transmit antennas
+N=2;                %receive antennas
+K=40;               %number of users
+sc=9;               %common sparsity parameter
+s=17;               %individual sparsity parameter
+P=28;               %transmit SNR in dB
+eta1=0.2;           %parameters used 
+eta2=2;             %in JOMP alg.
+Dt=1/2;             %antenna spacing
+Dr=1/2;             %antennas spacing
+Lt=round(M/2);      %Transmit antenna length 
+Lr=round(N/2);      %Receive antenna length
+T=50;               %number of pilot symbols
+
+
+
+%Creation of angular basis matrix At and Ar
+e=[];
+At=[];
+for k=1:M
+    for a=1:M
+        tmp1 = exp(-1i*2*pi*(a-1)*Dt*(k-1)/Lt);
+        e = [e;    tmp1];
+    end
+    et = 1/sqrt(M) .* e;
+    At = [At  et];
+    e=[];
+    et=[];
+end
+
+e=[];
+Ar=[];
+for k=1:N
+    for a=1:N
+        tmp1 = exp(-1i*2*pi*(a-1)*Dr*(k-1)/Lr);
+        e = [e;    tmp1];
+    end
+    er = 1/sqrt(N) .* e;
+    Ar = [Ar  er];
+    e=[];
+    er=[];
+end
+
+%Pilot matrix X
+Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1));
+X = At * Xa;
+
+
+
+%Creation of the concatenated 
+%Channel matrix Hw for K users
+Hw=zeros(N*K,M);
+Omegai=[];
+Omegac=randi([1 M],sc,1);
+for i=1:K
+   Omegai(i,:) = randi([1 M],s,1);
+   Hw(i*N-1:i*N , Omegac(:))    = 1; 
+   Hw(i*N-1:i*N , Omegai(i,:))  = 1;  
+end
+
+%altarnative method for Hw??
+% Hw=[];
+% for i=1:K
+%     tmp=zeros(N,M);
+%     Omegai(i,:) = randi([1 M],s-sc,1);
+%     tmp(:,Omegai(i,:)) = 1;
+%     tmp(:,Omegac) = 1;
+%     Hw = [Hw; tmp];
+% end
+
+
+%Creation of the concatenated channel matrix
+%Hi for all K users
+H = [];
+for i=1:K
+    H = [H; Ar * Hw(i*N-1:i*N,:) *At ];
+end
+%===========================================
+%Beggining of the algorithm
+
+%step1
+%Calculate hat amounts
+X_hat = sqrt(M/(P*T)) .* (X' *At);
+H_hat = Hw' ;
+Y_hat = X_hat * H_hat;
+%N_hat = sqrt(M/(P*T)) .* N' *Ar;
+
+
+%step2(Common support identification)
+R=[];
+R = Y_hat(:,1:2);     %i am now dealing with 1 user
+Fi = [];
+Omegac_est = [];
+
+for k=1:sc
+    
+    %Modified OMP to solve problem at A for 1 user
+    rm = abs(R); %periexei kapoia mhgadika skoupidia
+    Omegai_e = [];
+    for i=1:length(Omegai(1,:))-length(Omegac)
+        
+        for j=1:M
+            tmp1(j) = abs(dot( X_hat(:,j)' , rm(:,1) ) );
+            tmp2(j) = abs(dot( X_hat(:,j)' , rm(:,2) ) );
+            tmp3(j) = norm([tmp1(j); tmp2(j)], 'fro');
+        end 
+        
+        [value , index] = max(tmp1);
+        Omegai_e = [Omegai_e index];
+        Fi = [Fi X_hat(:,index)];
+        
+        x2t = pinv(Fi) *rm(:,1);
+        at = Fi * x2t;
+        rm(:,1) = abs(R(:,1)) - at;
+    end
+    
+    %Alpha
+%     tmp=[];
+%     for i=1:M
+%         tmp(i,1) = norm((X_hat(:,i)' *R), 'fro');  %abs(dot(rm,Fi(:,i))); 
+%     end
+
+%     %h logikh auth pisteuw douleuei giati o pinakas X kai X_hat einai full rank
+%     value=0;
+%     index=0;
+%     temp=[];
+%     Omegai_est=[];
+%     for j = 1:K %for each user calculate Omegai_est
+%         for i=1 : lenth(Omegai(j))-length(Omegac)
+%             [value,index]=max(tmp);
+%             temp = [temp index];
+%             Omegai_est = [Omegai_est;  index];
+%             tmp(index) = 0;   %gia na mhn vriskei to idio megisto olh thn wra
+%         end
+%     end
+    %h timh ths posothtas sto "A" vhma
+    %norm( (X_hat(:,sort(Omega_i_est))' *R), 'fro' )
+
+    %====== B (Support pruning)
+    l=[];
+    for i=1:length(Omegai_e)
+        if(  norm(X_hat(:,Omegai_e(i))' *R , 'fro')^2 >= (eta1*N) ) 
+            l = [l i];  
+        end    
+    end
+    Omegai_est()
+    %===== C (Support Update)
+    
+
+
+
+
+end
+
+
+
