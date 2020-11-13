@@ -8,8 +8,9 @@ N=200;
 d=800;
 s=zeros(d,1); %arbitrary signal to recover
 %----manualy creating the sparse signal---------
+vector = randi([1 , d],m,1); %for easy check at sparsity indexes
 
-s(randi([1 , d],m,1),1) = randi([1, 100],m,1);
+s(vector,1) = randi([1, 100],m,1);
 
 %-------------------------------------------
 

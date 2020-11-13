@@ -124,27 +124,27 @@ for k = 1:sc
             rm = R(:,j*N-1:j*N) - at;
         end        
         
-%         E=[];
-%         Matrix=[];
-%         %testing
-%         t=0;
-%         while(1)
-%            for i=1:M
-%                tmp(i) = abs( dot( X_hat(:,i) , rm(:,1) ) );
-%            end
-%            [t1,lt] = max(tmp);
-%            E = [E lt];
-%            Matrix = [Matrix X_hat(:,lt)];
-%            xt = pinv(Matrix) * R(:,j*N-1);
-%            am = Matrix * xt;
-%            rm = R(:,j*N-1) - am;
-%            
-%            t=t+1;
-%            
-%            if( norm(rm) <= 10^-4 )
-%                break;
-%            end
-%         end    
+        E=[];
+        Matrix=[];
+        %testing
+        t=0;
+        while(1)
+           for i=1:M
+               tmp(i) = abs( dot( rm(:,1), X_hat(:,i) ) );
+           end
+           [t1,lt] = max(tmp);
+           E = [E lt];
+           Matrix = [Matrix X_hat(:,lt)];
+           xt = pinv(Matrix) * R(:,j*N-1);
+           am = Matrix * xt;
+           rm = R(:,j*N-1) - am;
+           
+           t=t+1;
+           
+           if( norm(rm) <= 10^-4 )
+               break;
+           end
+        end    
         
         
         
