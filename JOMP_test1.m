@@ -1,7 +1,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% to Omegac sumperiexetai mesa sto     %
-% Omega_i                              %
+%                                      %
+%                                      %
 %                                      % 
 %                                      %
 %                                      %
@@ -13,8 +13,8 @@ clear;
 M=160;              %transmit antennas
 N=2;                %receive antennas
 K=40;               %number of users
-sc=9;               %common sparsity parameter
-s=17;               %individual sparsity parameter
+sc=4;               %common sparsity parameter
+s=6;               %individual sparsity parameter
 P=28;               %transmit SNR in dB
 eta1=0.2;           %parameters used 
 eta2=2;             %in JOMP alg.
@@ -54,7 +54,7 @@ for k=1:N
 end
 
 %Pilot matrix X
-Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1));
+Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
 X = At * Xa;
 
 
@@ -62,24 +62,12 @@ X = At * Xa;
 %Creation of the concatenated 
 %Channel matrix Hw for K users
 Hw=zeros(N*K,M);
-Omegai=[];
+Omegai = randi([1 M],K,s);
 Omegac=randi([1 M],sc,1);
-for i=1:K
-   Omegai(i,:) = randi([1 M],s-sc,1);    
-   Hw(i*N-1:i*N , Omegai(i,:))  = 1; 
-   Hw(i*N-1:i*N , Omegac(:))    = 1;
+for i=1:K   
+   Hw(i*N-1:i*N , Omegai(i,:))  = randi([1, 100],2,length(Omegai(i,:)) ); 
+   Hw(i*N-1:i*N , Omegac(:))    = randi([1, 100], 2,length(Omegac) );
 end
-
-%altarnative method for Hw??
-% Hw=[];
-% for i=1:K
-%     tmp=zeros(N,M);
-%     Omegai(i,:) = randi([1 M],s-sc,1);
-%     tmp(:,Omegai(i,:)) = 1;
-%     tmp(:,Omegac) = 1;
-%     Hw = [Hw; tmp];
-% end
-
 
 %Creation of the concatenated channel matrix
 %Hi for all K users
@@ -113,13 +101,12 @@ for k = 1:sc
         indexes=[];
         Ft = [];
         rm = R(:,j*N-1:j*N);
+        
         %find the sc - |Omegac_est| columns we need
         for i=1 : length(Omegai(j,:))-length(Omegac_est)
             %Modified OMP to solve problem at A for 1 user            
             for l=1:M
-                %tmp2(l) = abs(dot( X_hat(:,l)' , rm(:,1)) );
-                tmp1(l) = sqrt( norm(X_hat(:,l)' * rm(:,1))^2 + norm(X_hat(:,l)' * rm(:,2))^2 ); 
-                %tmp3(l) = norm( (X_hat(:,l)' * rm), 'fro' );
+                tmp1(l) = norm( X_hat(:,l)' *rm ) /norm(X_hat(:,l)) ; 
             end 
         
             [value , index] = max(tmp1);
@@ -131,29 +118,32 @@ for k = 1:sc
             x2t = pinv(Ft) * R(:,j*N-1:j*N);
             at = Ft * x2t;
             rm = R(:,j*N-1:j*N) - at;
-        end        
+        end  
         
-%         E=[];
-%         Matrix=[];
-%         %testing
-%         t=0;
-%         while(1)
-%            for i=1:M
-%                tmp(i) = abs( dot( rm(:,1), X_hat(:,i) ) );
-%            end
-%            [t1,lt] = max(tmp);
-%            E = [E lt];
-%            Matrix = [Matrix X_hat(:,lt)];
-%            xt = pinv(Matrix) * R(:,j*N-1);
-%            am = Matrix * xt;
-%            rm = R(:,j*N-1) - am;
-%            
-%            t=t+1;
-%            
-%            if( norm(rm) <= 10^-3 )
-%                break;
-%            end
-%         end    
+        
+        E=[];
+        Matrix=[];
+        %testing
+        t=0;
+        while(1)
+           for i=1:M
+               tmp(i) = norm( X_hat(:,i)' *rm ) /norm( X_hat(:,i) ) ; 
+           end
+           
+           [t1,lt] = max(tmp);
+           
+           E = [E lt];
+           Matrix = [Matrix X_hat(:,lt)];
+           xt = pinv(Matrix) * R(:,j*N-1:j*N);
+           am = Matrix * xt;
+           rm = R(:,j*N-1:j*N) - am;
+           
+           t=t+1;
+           
+           if( norm(rm) <= 10^-6 )
+               break;
+           end
+        end    
         
         
         
