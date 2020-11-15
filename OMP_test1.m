@@ -57,7 +57,7 @@ H = Ar * Hw * At ;
 Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
 X = At * Xa;
 
-Y = Xa' * Hw' ;
+Y =  Hw * X;
 
 %Calculate hat amounts
 X_hat = sqrt(M/(P*T)) .* (X' * At);
@@ -67,7 +67,7 @@ Y_hat = X_hat * H_hat;
 
 %step 1
 L=[];               %Index set of lt(lamda taf)
-u = Y;              %u is Y_hat TxN 50x2
+u = Y_hat;          %u is Y_hat TxN 50x2
 rm = u;             %arxikopoihsh residual 
 t=0;                %iterations
 Ft=[];
@@ -79,17 +79,17 @@ while (1)
     %tmp = zeros(d,1);
     for i = 1 : M
         %tmp(i,1)=abs(dot(rm,Fi(:,i)));
-        tmp1(i) = norm( Xa(i,:) * rm) / norm( Xa(i,:) );
+        tmp1(i) = norm( X_hat(:,i)' * rm) / norm( X_hat(:,i) );
     end
     
-    [M,lt] = max(tmp1);
+    [kappa,lt] = max(tmp1);
     
     %step 3
     %update index set
     L = [L; lt];
     
     %update matrix Ft
-    Ft = [Ft Xa(lt,:)'];
+    Ft = [Ft X_hat(:,lt)];
     
 
     %least squears problem
@@ -109,7 +109,7 @@ while (1)
     
 end
 
-s_hat = zeros(d,1);
+s_hat = zeros(M,N);
 for i=1:t
-    s_hat(L(i,1),1:2) = xt(i,:);
+    s_hat(L(i,1),1:N) = xt(i,:);
 end

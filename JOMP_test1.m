@@ -88,7 +88,7 @@ Y_hat = X_hat * H_hat;
 
 
 %step2(Common support identification)
-R=abs(Y_hat);
+R = real( Y_hat );
 Omegac_est = [];
 
 for k = 1:sc
@@ -103,7 +103,10 @@ for k = 1:sc
         rm = R(:,j*N-1:j*N);
         
         %find the sc - |Omegac_est| columns we need
-        for i=1 : length(Omegai(j,:))-length(Omegac_est)
+        it=0;
+        while(1)
+            it=it+1;    %iterations
+            
             %Modified OMP to solve problem at A for 1 user            
             for l=1:M
                 tmp1(l) = norm( X_hat(:,l)' *rm ) /norm(X_hat(:,l)) ; 
@@ -118,34 +121,12 @@ for k = 1:sc
             x2t = pinv(Ft) * R(:,j*N-1:j*N);
             at = Ft * x2t;
             rm = R(:,j*N-1:j*N) - at;
-        end  
-        
-        
-        E=[];
-        Matrix=[];
-        %testing
-        t=0;
-        while(1)
-           for i=1:M
-               tmp(i) = norm( X_hat(:,i)' *rm ) /norm( X_hat(:,i) ) ; 
-           end
-           
-           [t1,lt] = max(tmp);
-           
-           E = [E lt];
-           Matrix = [Matrix X_hat(:,lt)];
-           xt = pinv(Matrix) * R(:,j*N-1:j*N);
-           am = Matrix * xt;
-           rm = R(:,j*N-1:j*N) - am;
-           
-           t=t+1;
-           
-           if( norm(rm) <= 10^-6 )
-               break;
-           end
-        end    
-        
-        
+            
+            if( norm(rm)<10^-6 )
+                break
+            end
+        end     
+                
         
         %====== B (Support pruning)
         l=[];
@@ -184,10 +165,10 @@ for k = 1:sc
     Omegac_est = [Omegac_est paths(index)];
     
     %======== D(Residual update)
-    L = X_hat(:,Omegac_est) * pinv(X_hat(:,Omegac_est));
+    L = real( X_hat(:,Omegac_est) * pinv(X_hat(:,Omegac_est)) );
     
     for ii=1:K
-       R( :, ii*N-1:ii*N ) = abs ( ( diag( ones( length(X_hat(:,1)) ,1) ) - L ) * Y_hat(:,ii*N-1:ii*N) );
+       R(:,ii*N-1:ii*N ) = ( diag( ones( length(X_hat(:,1)) ,1) ) - L ) * Y_hat(:,ii*N-1:ii*N);
     end
     
     
@@ -196,7 +177,7 @@ end
 
 %===================  STEP 3 ==================================
 Omegai_est = {};
-R = Y_hat;
+R = real( Y_hat );
 L =[];
 Omega_vector =[];
 for i=1:K %for all users
