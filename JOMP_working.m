@@ -1,4 +1,3 @@
-
 clc;
 clear;
 
@@ -159,7 +158,7 @@ for k = 1:sc
               t=t+1;
           end
           
-          if( t>=length(Omegac_est) )
+          if( t>length(Omegac_est) )
               break;
           end
         end
@@ -223,29 +222,18 @@ for i=1:K %for all users
     end
     
 end %end for
+
     
 %============== STEP4 ===================
-
-%for user 1
-H_est = zeros(N,M);
-H_est_hat = zeros(M,N);
-
-
-vector = cell2mat(Omegai_est(i,1));
-H_est_hat(vector , 1:N ) = pinv( X_hat(:,vector) ) * Y_hat(: ,1:N) ;
-
-H_est = Ar * H_est_hat' * At' ;
-
-
-% H_est = zeros(N*K,M);
-% H_est_hat = zeros(M,N*K);
-% for i=1:K
-%    vector = [];
-%    
-%    vector = cell2mat(Omegai_est(i,1));
-%    
-%    H_est_hat(vector , i*N-1:i*N ) = pinv( X_hat(:,vector) ) * Y_hat(: ,i*N-1:i*N) ;
-%    
-%    H_est(i*N-1:i*N,:) = Ar * H_est_hat(:,i*N-1:i*N)' * At' ;
-%    
-% end
+H_est = zeros(N*K,M);
+H_est_hat = zeros(M,N*K);
+for i=1:K
+   vector = [];
+   
+   vector = cell2mat(Omegai_est(i,1));
+   
+   H_est_hat(sort(vector) , i*N-1:i*N ) = pinv( X_hat(:,sort(vector) ) ) * Y_hat(: ,i*N-1:i*N) ;
+   
+   H_est(i*N-1:i*N,:) = Ar * H_est_hat(:,i*N-1:i*N)' * At' ;
+   
+end

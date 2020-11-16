@@ -4,8 +4,8 @@ clear;
 M=160;              %transmit antennas
 N=2;                %receive antennas
 K=40;               %number of users
-sc=9;               %common sparsity parameter
-s=17;               %individual sparsity parameter
+sc=4;               %common sparsity parameter
+s=10;               %individual sparsity parameter
 P=28;               %transmit SNR in dB
 eta1=0.2;           %parameters used 
 eta2=2;             %in JOMP alg.
@@ -45,32 +45,18 @@ for k=1:N
 end
 
 %Pilot matrix X
-Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1));
+Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
 X = At * Xa;
-
-
 
 %Creation of the concatenated 
 %Channel matrix Hw for K users
 Hw=zeros(N*K,M);
-Omegai=[];
+Omegai = randi([1 M],K,s-sc);
 Omegac=randi([1 M],sc,1);
-for i=1:K
-   Omegai(i,:) = randi([1 M],s,1);
-   Hw(i*N-1:i*N , Omegac(:))    = 1; 
-   Hw(i*N-1:i*N , Omegai(i,:))  = 1;  
+for i=1:K   
+   Hw(i*N-1:i*N , Omegai(i,:))  = randi([1, 100],2,length(Omegai(i,:)) ); 
+   Hw(i*N-1:i*N , Omegac(:))    = randi([1, 100], 2,length(Omegac) );
 end
-
-%altarnative method for Hw??
-% Hw=[];
-% for i=1:K
-%     tmp=zeros(N,M);
-%     Omegai(i,:) = randi([1 M],s-sc,1);
-%     tmp(:,Omegai(i,:)) = 1;
-%     tmp(:,Omegac) = 1;
-%     Hw = [Hw; tmp];
-% end
-
 
 %Creation of the concatenated channel matrix
 %Hi for all K users
@@ -88,10 +74,8 @@ H_hat = Hw' ;
 Y_hat = X_hat * H_hat;
 %N_hat = sqrt(M/(P*T)) .* N' *Ar;
 
-
-
 %step2(Common support identification)
-R=abs(Y_hat);
+R = real( Y_hat );
 Omegac_est = [];
 
 for k = 1:sc
@@ -100,29 +84,33 @@ for k = 1:sc
     times = [];
     for j = 1:K %for each user calculate Omegai_est
         
-        
         indexes=[];
-        Fi = [];
-        rm = R(:,j*N-1);
+        Ft = [];
+        rm = R(:,j*N-1:j*N);
+        
         %find the sc - |Omegac_est| columns we need
-        for i=1 : length(Omegai(j,:))-length(Omegac)
+        it=0;
+        while(1)
+            it=it+1;    %iterations
+            
             %Modified OMP to solve problem at A for 1 user            
             for l=1:M
-                tmp1(l) = abs(dot( X_hat(:,l)' , rm) );
-                %tmp1(l) = norm( (X_hat(:,l)' * rm), 'fro' );
+                tmp1(l) = norm( X_hat(:,l)' *rm ) /norm(X_hat(:,l)) ; 
             end 
         
             [value , index] = max(tmp1);
+            indexes = [indexes index];           
+            Ft = [Ft X_hat(:,index)];       
+            x2t = pinv(Ft) * R(:,j*N-1:j*N);
+            at = Ft * x2t;
+            rm = R(:,j*N-1:j*N) - at;
             
-            indexes = [indexes index];
-            
-            Fi = [Fi X_hat(:,index)];
+            if( norm(rm)<10^-6 )
+                break
+            end
+        end     
+                
         
-            x2t = pinv(Fi) * R(:,j*N-1);
-            at = Fi * x2t;
-            rm = R(:,j*N-1) - at;
-        end        
-    
         %====== B (Support pruning)
         l=[];
         for i=1:length(indexes)
@@ -157,36 +145,54 @@ for k = 1:sc
     
     %======= C(Support Update)
     [value , index] = max(times);
+    %bellow is a some code to deal with a situational problems
+    %where the last support index is not retrieved correctly
+    if( not(isempty(Omegac_est)) )
+        t=1;
+        while(1)
+          if( paths(index) == Omegac_est(t) )
+              times(index)   = 0;
+              [value, index] = max(times);
+              t=1;
+          else
+              t=t+1;
+          end
+          
+          if( t>length(Omegac_est) )
+              break;
+          end
+        end
+       
+    end    
+    %update the indexes
     Omegac_est = [Omegac_est paths(index)];
     
     %======== D(Residual update)
-    L = X_hat(:,Omegac_est) *pinv(X_hat(:,Omegac_est));
+    L = real( X_hat(:,Omegac_est) * pinv(X_hat(:,Omegac_est)) );
     
     for ii=1:K
-       R( :, ii*N-1:ii*N ) = abs ( ( diag( ones( length(X_hat(:,1)) ,1) ) - L ) * Y_hat(:,ii*N-1:ii*N) );
+       R(:,ii*N-1:ii*N ) = ( diag( ones( length(X_hat(:,1)) ,1) ) - L ) * Y_hat(:,ii*N-1:ii*N);
     end
-    
-    
+       
 end
 
 
 %===================  STEP 3 ==================================
 Omegai_est = {};
-R = Y_hat;
+%R = real( Y_hat );
 L =[];
 Omega_vector =[];
 for i=1:K %for all users
-    t=1;    %iterations counter
+    Omega_vector = Omegac_est;
+    t=0;    %iterations counter   
     while (1)
-        %Alfa(Upport Update)
-        Omega_vector = Omegac_est;
-        
+        t=t+1;
+        %Alfa(Upport Update)       
         tmp=[];
         for j=1:M
-            tmp(j) = norm( (X_hat(:,j)' * R(:, i*N-1:i*N)), 'fro' );
+            tmp(j) = norm( X_hat(:,j)' *R(:, i*N-1:i*N) ) /norm(X_hat(:,j));
         end
-        [value, index] = max(tmp);
-    
+        [value, index] = max(tmp);   
         Omega_vector = [Omega_vector index];
         
         
@@ -201,11 +207,11 @@ for i=1:K %for all users
             break;
         end
         
-        if( t >= (length(Omegai(i,:)) - length(Omegac)) )
+        if( t >= (s - sc) )
             break;
         end
         
-        t=t+1;
+        
     end %end while  
     
     %update Omega-_est matrix
@@ -216,9 +222,9 @@ for i=1:K %for all users
     end
     
 end %end for
+
     
 %============== STEP4 ===================
-
 H_est = zeros(N*K,M);
 H_est_hat = zeros(M,N*K);
 for i=1:K
@@ -226,7 +232,7 @@ for i=1:K
    
    vector = cell2mat(Omegai_est(i,1));
    
-   H_est_hat(vector , i*N-1:i*N ) = abs (pinv( X_hat(:,vector) ) * Y_hat(: ,i*N-1:i*N) );
+   H_est_hat(sort(vector) , i*N-1:i*N ) = pinv( X_hat(:,sort(vector) ) ) * Y_hat(: ,i*N-1:i*N) ;
    
    H_est(i*N-1:i*N,:) = Ar * H_est_hat(:,i*N-1:i*N)' * At' ;
    
