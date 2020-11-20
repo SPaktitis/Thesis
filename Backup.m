@@ -62,8 +62,16 @@ end
 %Hi for all K users
 H = [];
 for i=1:K
-    H = [H; Ar * Hw(i*N-1:i*N,:) *At ];
+    H = [H; Ar * Hw(i*N-1:i*N,:) * At' ];
 end
+
+
+%%%%%%%%%
+Y=[];
+for i=1:K
+   Y(i*N-1:i*N,:) = H(i*N-1:i*N,:) * X; 
+end
+
 %===========================================
 %Beggining of the algorithm
 
@@ -71,7 +79,13 @@ end
 %Calculate hat amounts
 X_hat = sqrt(M/(P*T)) .* (X' *At);
 H_hat = Hw' ;
-Y_hat = X_hat * H_hat;
+%Y_hat = X_hat * H_hat;
+
+Y_hat=[];
+for i=1:K
+    Y_hat(:,i*N-1:i*N) = sqrt(M/(P*T)) .* ( Y(i*N-1:i*N,:)' *Ar);
+end
+
 %N_hat = sqrt(M/(P*T)) .* N' *Ar;
 
 %step2(Common support identification)
@@ -237,3 +251,7 @@ for i=1:K
    H_est(i*N-1:i*N,:) = Ar * H_est_hat(:,i*N-1:i*N)' * At' ;
    
 end
+
+
+%=========== NMSE
+norm( H - H_est )^2 / norm(H)^2

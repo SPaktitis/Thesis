@@ -4,7 +4,7 @@ clear;
 M=160;              %transmit antennas
 N=2;                %receive antennas
 K=40;               %number of users
-sc=5;               %common sparsity parameter
+sc=4;               %common sparsity parameter
 s=10;               %individual sparsity parameter
 P=28;               %transmit SNR in dB
 eta1=0.2;           %parameters used 
@@ -48,17 +48,14 @@ end
 Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
 X = At * Xa;
 
-%Noise matrix N, lets start with real noise
-
-
 %Creation of the concatenated 
 %Channel matrix Hw for K users
 Hw=zeros(N*K,M);
 Omegai = randi([1 M],K,s-sc);
 Omegac=randi([1 M],sc,1);
 for i=1:K   
-   Hw(i*N-1:i*N , Omegai(i,:))  = randi([1, 100],2,length(Omegai(i,:)) ) + 1i*randi([1, 100],2,length(Omegai(i,:)) ) ; 
-   Hw(i*N-1:i*N , Omegac(:))    = randi([1, 100], 2,length(Omegac) )     + 1i*randi([1, 100], 2,length(Omegac) );
+   Hw(i*N-1:i*N , Omegai(i,:))  = randi([1, 100],2,length(Omegai(i,:)) ); 
+   Hw(i*N-1:i*N , Omegac(:))    = randi([1, 100], 2,length(Omegac) );
 end
 
 %Creation of the concatenated channel matrix
@@ -77,7 +74,6 @@ end
 
 %===========================================
 %Beggining of the algorithm
-
 
 %step1
 %Calculate hat amounts

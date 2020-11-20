@@ -1,21 +1,19 @@
 clc;
 clear;
 
-%variales
-m=10;   %sparsity lvl
-N=50;   
-d=300;  
+CSIT_errors =[];
+T = 30:70;
 
-s=zeros(d,1); %arbitrary signal to recover
-%----manualy creating the sparse signal---------
-%s(1,1)=round(100*(rand(1,1)+1));
-s(30:30:300,1)=round(100*(rand(m,1)+1));
+for i=1:length(T)
+    CSIT = JOMP_complexHw_noNoise(T(i));
+    CSIT_errors = [CSIT_errors CSIT] ;
 
-Fi=normrnd(0,1/N,N,d);
-u=Fi*s;
+end
 
-[s_hat,L,am,rm]=OMP(Fi,u,m);
-
+figure;
+semilogy(T,CSIT_errors);
+xlabel("Overhead T");
+ylabel("NMSE of CSIT estimation");
 
 
 
