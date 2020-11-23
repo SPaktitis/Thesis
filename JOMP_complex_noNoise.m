@@ -1,4 +1,4 @@
-function CSIT = JOMP_complexHW_nNoise(T)
+function CSIT = JOMP_complex_nNoise(T)
 
 M=160;              %transmit antennas
 N=2;                %receive antennas
@@ -94,7 +94,7 @@ end
     %N_hat = sqrt(M/(P*T)) .* N' *Ar;
 
     %step2(Common support identification)
-    R = real( Y_hat );
+    R = Y_hat ;
     Omegac_est = [];
 
     for k = 1:sc

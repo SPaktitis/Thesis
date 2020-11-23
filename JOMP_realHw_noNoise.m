@@ -4,7 +4,7 @@ clear;
 M=160;              %transmit antennas
 N=2;                %receive antennas
 K=40;               %number of users
-sc=4;               %common sparsity parameter
+sc=5;               %common sparsity parameter
 s=10;               %individual sparsity parameter
 P=28;               %transmit SNR in dB
 eta1=0.2;           %parameters used 
