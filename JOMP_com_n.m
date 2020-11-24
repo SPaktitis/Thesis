@@ -1,18 +1,18 @@
-function CSIT = JOMP_complex_nNoise(T)
+function CSIT = JOMP_com_n(T)
 
-M=160;              %transmit antennas
-N=2;                %receive antennas
-K=40;               %number of users
-sc=4;               %common sparsity parameter
-s=6;               %individual sparsity parameter
-P=28;               %transmit SNR in dB
-eta1=0.2;           %parameters used 
-eta2=2;             %in JOMP alg.
-Dt=1/2;             %antenna spacing
-Dr=1/2;             %antennas spacing
-Lt=round(M/2);      %Transmit antenna length 
-Lr=round(N/2);      %Receive antenna length
-                    %number of pilot symbols
+M    =160;           %transmit antennas
+N    =2;             %receive antennas
+K    =40;            %number of users
+sc   =6;             %common sparsity parameter
+s    =10;            %individual sparsity parameter
+P    =28;            %transmit SNR in dB
+eta1 =0.2;           %parameters used 
+eta2 =2;             %in JOMP alg.
+Dt   =1/2;           %antenna spacing
+Dr   =1/2;           %antennas spacing
+Lt   =round(M/2);    %Transmit antenna length 
+Lr   =round(N/2);    %Receive antenna length
+                     %number of pilot symbols
 
 
 
@@ -56,11 +56,11 @@ Hw=zeros(N*K,M);
 Omegai = randi([1 M],K,s-sc);
 Omegac=randi([1 M],sc,1);
 for i=1:K   
-   Hw(i*N-1:i*N , Omegai(i,:))  = (2*rand( N,length(Omegai(i,:)) ) - 1) +1i*(2*rand( N,length(Omegai(i,:)) )-1);
-   %sqrt(1/2)*( randn( N,length(Omegai(i,:)) ) + 1i*randn( N,length(Omegai(i,:)) ) );
+   Hw(i*N-1:i*N , Omegai(i,:))  = sqrt(.5)  * ( randn( N,length(Omegai(i,:)) ) + 1i*randn( N,length(Omegai(i,:)) ) );
+   %(2*rand( N,length(Omegai(i,:)) ) - 1) +1i*(2*rand( N,length(Omegai(i,:)) )-1);
    %randi([1, 100],2,length(Omegai(i,:)) ) + 1i*randi([1, 100],2,length(Omegai(i,:)) ) ; 
-   Hw(i*N-1:i*N , Omegac(:))    = (2*rand( N,length(Omegac) ) - 1) +1i*(2*rand( N,length(Omegac) )-1);
-   %sqrt(1/2)*(randn( N,length(Omegac) ) + 1i*randn( N,length(Omegac) ) );
+   Hw(i*N-1:i*N , Omegac(:))    =sqrt(.5) *(randn( N,length(Omegac) ) + 1i*randn( N,length(Omegac) ) );
+   %(2*rand( N,length(Omegac) ) - 1) +1i*(2*rand( N,length(Omegac) )-1);
    %randi([1, 100], 2,length(Omegac) )     + 1i*randi([1, 100], 2,length(Omegac) );
 end
 
@@ -76,6 +76,15 @@ end
  for i=1:K
     Y(i*N-1:i*N,:) = H(i*N-1:i*N,:) * X; 
  end
+ 
+ %White Gaussian noise with zero mean and unit variance
+  Noise = sqrt( ( sqrt(.5)*( mean( abs(Y).^2 )./...
+            ( 10^(28/10) ) ) ) ) .* ...
+            ( (randn( size(Y) )) + 1i * randn( size(Y) ) );
+               
+ 
+ %Noisy output
+ Y = Y + Noise;
 
 %===========================================
 %Beggining of the algorithm
@@ -84,11 +93,10 @@ end
     %Calculate hat amounts
     X_hat = sqrt(M/(P*T)) .* (X' *At);
     H_hat = Hw' ;
-    %Y_hat = X_hat * H_hat;
 
     Y_hat=[];
-    for i=1:K
-        Y_hat(:,i*N-1:i*N) = sqrt(M/(P*T)) .* ( Y(i*N-1:i*N,:)' *Ar);
+    for j=1:K
+        Y_hat(:,j*N-1:j*N) = sqrt(M/(P*T)) .* ( Y(j*N-1:j*N,:)' *Ar);
     end
 
     %N_hat = sqrt(M/(P*T)) .* N' *Ar;
@@ -186,7 +194,7 @@ end
         Omegac_est = [Omegac_est paths(index)];
         
         %======== D(Residual update)
-        L = real( X_hat(:,Omegac_est) * pinv(X_hat(:,Omegac_est)) );
+        L = X_hat(:,Omegac_est) * pinv(X_hat(:,Omegac_est)) ;
     
         for ii=1:K
            R(:,ii*N-1:ii*N ) = ( diag( ones( length(X_hat(:,1)) ,1) ) - L ) * Y_hat(:,ii*N-1:ii*N);
@@ -258,10 +266,5 @@ end
 
 
     %=========== NMSE
-    CSIT= norm( H - H_est )^2 / norm(H)^2;
+    CSIT= norm( H - H_est ).^2 / norm( H ).^2;
 end
-
-
-
-
-

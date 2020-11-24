@@ -13,7 +13,7 @@ Dt=1/2;             %antenna spacing
 Dr=1/2;             %antennas spacing
 Lt=round(M/2);      %Transmit antenna length 
 Lr=round(N/2);      %Receive antenna length
-T=50;               %number of pilot symbols
+T=70;               %number of pilot symbols
 
 
 
@@ -54,8 +54,12 @@ Hw=zeros(N*K,M);
 Omegai = randi([1 M],K,s-sc);
 Omegac=randi([1 M],sc,1);
 for i=1:K   
-   Hw(i*N-1:i*N , Omegai(i,:))  = randi([1, 100],2,length(Omegai(i,:)) ); 
-   Hw(i*N-1:i*N , Omegac(:))    = randi([1, 100], 2,length(Omegac) );
+   Hw(i*N-1:i*N , Omegai(i,:))  = sqrt(.5) * ( randn(N,length(Omegai(i,:))) );%+...
+                                             %1i *randn( N,length(Omegai(i,:)) ) );
+   %randi([1, 100],2,length(Omegai(i,:)) ); 
+   Hw(i*N-1:i*N , Omegac(:))    = sqrt(.5) * ( randn(N,length(Omegac)) );%+...
+                                           %1i *randn( N,length(Omegac) ) );
+   %randi([1, 100], 2,length(Omegac) );
 end
 
 %Creation of the concatenated channel matrix
