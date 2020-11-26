@@ -4,8 +4,8 @@ clear;
 M=160;              %transmit antennas
 N=2;                %receive antennas
 K=40;               %number of users
-sc=5;               %common sparsity parameter
-s=10;               %individual sparsity parameter
+sc=2;               %common sparsity parameter
+s=4;               %individual sparsity parameter
 P=28;               %transmit SNR in dB
 eta1=0.2;           %parameters used 
 eta2=2;             %in JOMP alg.
@@ -13,7 +13,7 @@ Dt=1/2;             %antenna spacing
 Dr=1/2;             %antennas spacing
 Lt=round(M/2);      %Transmit antenna length 
 Lr=round(N/2);      %Receive antenna length
-T=70;               %number of pilot symbols
+T=50;               %number of pilot symbols
 
 
 
@@ -56,10 +56,9 @@ Omegac=randi([1 M],sc,1);
 for i=1:K   
    Hw(i*N-1:i*N , Omegai(i,:))  = sqrt(.5) * ( randn(N,length(Omegai(i,:))) );%+...
                                              %1i *randn( N,length(Omegai(i,:)) ) );
-   %randi([1, 100],2,length(Omegai(i,:)) ); 
+
    Hw(i*N-1:i*N , Omegac(:))    = sqrt(.5) * ( randn(N,length(Omegac)) );%+...
                                            %1i *randn( N,length(Omegac) ) );
-   %randi([1, 100], 2,length(Omegac) );
 end
 
 %Creation of the concatenated channel matrix
@@ -93,7 +92,7 @@ end
 %N_hat = sqrt(M/(P*T)) .* N' *Ar;
 
 %step2(Common support identification)
-R = real( Y_hat );
+R =  Y_hat ;
 Omegac_est = [];
 
 for k = 1:sc
@@ -258,4 +257,4 @@ end
 
 
 %=========== NMSE
-norm( H - H_est )^2 / norm(H)^2
+norm( H - H_est , 'fro')^2 / norm( H, 'fro' )^2

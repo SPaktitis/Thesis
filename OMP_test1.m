@@ -10,7 +10,7 @@ s=zeros(d,1); %arbitrary signal to recover
 %----manualy creating the sparse signal---------
 vector = randi([1 , d],m,1); %for easy check at sparsity indexes
 
-s(vector,1) = (2*rand(m,1) - 1) +1i*(2*rand(m,1)-1);%sqrt(1/2)*( randn( m,1 ) + 1i*randn(m,1) ); %randi([1, 100],m,1);
+s(vector,1) = sqrt(.5)*( randn( m,1 ) + 1i*randn(m,1) );%(2*rand(m,1) - 1) +1i*(2*rand(m,1)-1); %randi([1, 100],m,1);
 
 %-------------------------------------------
 
