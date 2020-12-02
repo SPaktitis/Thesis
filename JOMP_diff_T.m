@@ -1,4 +1,4 @@
-function CSIT = JOMP_com_n(T)
+function CSIT = JOMP_diff_T(T)
 
 M    =160;           %transmit antennas
 N    =2;             %receive antennas
@@ -76,7 +76,7 @@ end
  end              
  
  %Noisy output
- Y = awgn(Y,28);
+ Y = awgn(Y,P);
 
 %===========================================
 %Beggining of the algorithm

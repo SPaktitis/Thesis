@@ -1,49 +1,56 @@
+%%%%%%%%%%%% Different overhead snr %%%%%%%%%%%%%%%%%
 clc;
 clear;
 
-NMSE_com =[];
-NMSE_com_n =[];
-NMSE_real =[];
+NMSE_diff_snr=[];
+snr = 15:35;
+for i=1:length(snr)
+    CSIT = JOMP_diff_snr(snr(i));
+    NMSE_diff_snr = [NMSE_diff_snr CSIT] ;
+end
+
+figure;
+semilogy(snr,NMSE_diff_snr);
+title("NMSE of CSIT Versus SNR")
+xlabel("SNR(dB)");
+ylabel("NMSE of CSIT");
+
+%%%%%%%%%%%% Different overhead T %%%%%%%%%%%%%%%%%
+clc;
+clear;
+
+
+NMSE_diff_T =[];
 T = 31:70;
-
-
 for i=1:length(T)
-    CSIT = JOMP_real(T(i));
-    CSIT_real = [NMSE_real CSIT] ;
+    CSIT = JOMP_diff_T(T(i));
+    NMSE_diff_T = [NMSE_diff_T CSIT] ;
 end
 
 figure;
-semilogy(T,NMSE_real);
-title("Real channel without noise")
-xlabel("Overhead T");
-ylabel("NMSE of CSIT estimation");
+semilogy(T,NMSE_diff_T);
+title("NMSE of CSIT Versus T")
+xlabel("CSIT Estimation Overhead T");
+ylabel("NMSE of CSIT ");
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-for i=1:length(T)
-    CSIT = JOMP_com(T(i));
-    CSIT_com = [NMSE_com CSIT] ;
+
+%%%%%%%%%%%% Different common support sc %%%%%%%%%%%%%%%%%%%
+clc;
+clear;
+
+
+NMSE_diff_sc =[];
+sc = 2:10;
+for i=1:length(sc)
+    CSIT = JOMP_diff_sc(sc(i));
+    NMSE_diff_sc = [NMSE_diff_sc CSIT] ;
 end
 
 figure;
-semilogy(T,NMSE_com);
-title("Complex channel without noise")
-xlabel("Overhead T");
-ylabel("NMSE of CSIT estimation");
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for i=1:length(T)
-    CSIT = JOMP_com_n(T(i));
-    NMSE_com_n = [NMSE_com_n CSIT] ;
-end
-
-figure;
-semilogy(T,NMSE_com_n);
-title("Complex channel with noise")
-xlabel("Overhead T");
-ylabel("NMSE of CSIT estimation");
-
-
-
+semilogy(sc,NMSE_diff_sc);
+title("NMSE of CSIT Versus Sc")
+xlabel("Sc (common sparsity level parameter)");
+ylabel("NMSE of CSIT");
 
 
 

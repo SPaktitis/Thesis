@@ -1,18 +1,18 @@
-function CSIT = JOMP_com_n(T)
+function CSIT = JOMP_diff_snr(snr)
 
 M    =160;           %transmit antennas
 N    =2;             %receive antennas
 K    =40;            %number of users
 sc   =9;             %common sparsity parameter
 s    =17;            %individual sparsity parameter
-P    =28;            %transmit SNR in dB
+P    =snr;           %transmit SNR in dB
 eta1 =0.2;           %parameters used 
 eta2 =2;             %in JOMP alg.
 Dt   =1/2;           %antenna spacing
 Dr   =1/2;           %antennas spacing
 Lt   =round(M/2);    %Transmit antenna length 
 Lr   =round(N/2);    %Receive antenna length
-                     %number of pilot symbols
+T    =45;             %number of pilot symbols
 
 
 
@@ -76,7 +76,7 @@ end
  end              
  
  %Noisy output
- Y = awgn(Y,28);
+ Y = awgn(Y,P);
 
 %===========================================
 %Beggining of the algorithm

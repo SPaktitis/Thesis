@@ -1,18 +1,18 @@
 clc;
 clear;
 
-M=160;              %transmit antennas
-N=2;                %receive antennas
-K=40;               %number of users
-sc=2;               %common sparsity parameter
-s=4;               %individual sparsity parameter
-P=28;               %transmit SNR in dB
-eta1=0.2;           %parameters used 
-eta2=2;             %in JOMP alg.
-Dt=1/2;             %antenna spacing
-Dr=1/2;             %antennas spacing
-Lt=round(M/2);      %Transmit antenna length 
-Lr=round(N/2);      %Receive antenna length
+M=      160;              %transmit antennas
+N=      2;                %receive antennas
+K=      40;               %number of users
+sc=     9;               %common sparsity parameter
+s=      17;               %individual sparsity parameter
+P=      28;               %transmit SNR in dB
+eta1=   0.2;           %parameters used 
+eta2=   2;             %in JOMP alg.
+Dt=     1/2;             %antenna spacing
+Dr=     1/2;             %antennas spacing
+Lt=     round(M/2);      %Transmit antenna length 
+Lr=     round(N/2);      %Receive antenna length
 T=50;               %number of pilot symbols
 
 
