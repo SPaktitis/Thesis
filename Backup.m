@@ -4,8 +4,8 @@ clear;
 M=160;              %transmit antennas
 N=2;                %receive antennas
 K=40;               %number of users
-sc=4;               %common sparsity parameter
-s=10;               %individual sparsity parameter
+sc=2;               %common sparsity parameter
+s=4;               %individual sparsity parameter
 P=28;               %transmit SNR in dB
 eta1=0.2;           %parameters used 
 eta2=2;             %in JOMP alg.
@@ -50,12 +50,15 @@ X = At * Xa;
 
 %Creation of the concatenated 
 %Channel matrix Hw for K users
-Hw=zeros(N*K,M);
-Omegai = randi([1 M],K,s-sc);
-Omegac=randi([1 M],sc,1);
+Hw      = zeros(N*K,M);
+Omegai  =  randi([1 M],K,s-sc);
+Omegac  = unique( randi([1 M],sc,1), 'sorted' );
 for i=1:K   
-   Hw(i*N-1:i*N , Omegai(i,:))  = randi([1, 100],2,length(Omegai(i,:)) ); 
-   Hw(i*N-1:i*N , Omegac(:))    = randi([1, 100], 2,length(Omegac) );
+   Hw(i*N-1:i*N , Omegai(i,:))  = sqrt(.5) * ( randn(N,length(Omegai(i,:))) +...
+                                             1i *randn( N,length(Omegai(i,:)) ) );
+
+   Hw(i*N-1:i*N , Omegac(:))    = sqrt(.5) * ( randn(N,length(Omegac)) +...
+                                           1i *randn( N,length(Omegac) ) );
 end
 
 %Creation of the concatenated channel matrix
@@ -72,6 +75,13 @@ for i=1:K
    Y(i*N-1:i*N,:) = H(i*N-1:i*N,:) * X; 
 end
 
+% %White Gaussian noise with zero mean and unit variance
+% Noise = sqrt( ( sqrt(.5)*( mean( abs(Y).^2 )./...
+%             ( 10^(28/10) ) ) ) ) .* ...
+%             ( (randn( size(Y) )) + 1i * randn( size(Y) ) );
+% 
+% %Noisy output
+% Y = Y + Noise;
 %===========================================
 %Beggining of the algorithm
 
@@ -79,7 +89,8 @@ end
 %Calculate hat amounts
 X_hat = sqrt(M/(P*T)) .* (X' *At);
 H_hat = Hw' ;
-%Y_hat = X_hat * H_hat;
+
+Noise_hat =[];
 
 Y_hat=[];
 for i=1:K
@@ -89,7 +100,7 @@ end
 %N_hat = sqrt(M/(P*T)) .* N' *Ar;
 
 %step2(Common support identification)
-R = real( Y_hat );
+R =  Y_hat ;
 Omegac_est = [];
 
 for k = 1:sc
@@ -216,10 +227,10 @@ for i=1:K %for all users
         R(:, i*N-1:i*N) = (diag(ones(length(X_hat(:,1)) ,1)) - L ) *Y_hat(:, i*N-1:i*N);
     
     
-        %terminating conditions
-        if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
-            break;
-        end
+%         %terminating conditions
+%         if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
+%             break;
+%         end
         
         if( t >= (s - sc) )
             break;
@@ -254,4 +265,13 @@ end
 
 
 %=========== NMSE
-norm( H - H_est )^2 / norm(H)^2
+norm( H - H_est , 'fro')^2 / norm( H, 'fro' )^2
+
+
+for i=1:K
+ norm( H(i*N-1:i*N,:) - H_est(i*N-1:i*N,:) , 'fro')^2 / norm( H(i*N-1:i*N,:), 'fro' )^2
+end
+
+
+
+

@@ -4,7 +4,7 @@ clear;
 NMSE_com =[];
 NMSE_com_n =[];
 NMSE_real =[];
-T = 31:3:70;
+T = 31:70;
 
 
 for i=1:length(T)
@@ -32,7 +32,7 @@ ylabel("NMSE of CSIT estimation");
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i=1:length(T)
-    CSIT = JOMP_c_n(T(i));
+    CSIT = JOMP_com_n(T(i));
     NMSE_com_n = [NMSE_com_n CSIT] ;
 end
 

@@ -4,8 +4,8 @@ clear;
 M=160;              %transmit antennas
 N=2;                %receive antennas
 K=40;               %number of users
-sc=2;               %common sparsity parameter
-s=4;               %individual sparsity parameter
+sc=4;               %common sparsity parameter
+s=0;               %individual sparsity parameter
 P=28;               %transmit SNR in dB
 eta1=0.2;           %parameters used 
 eta2=2;             %in JOMP alg.
@@ -50,15 +50,15 @@ X = At * Xa;
 
 %Creation of the concatenated 
 %Channel matrix Hw for K users
-Hw=zeros(N*K,M);
-Omegai = randi([1 M],K,s-sc);
-Omegac=randi([1 M],sc,1);
+Hw      = zeros(N*K,M);
+Omegai  = randi([1 M],K,s-sc);
+Omegac  = randi([1 M],sc,1);
 for i=1:K   
-   Hw(i*N-1:i*N , Omegai(i,:))  = sqrt(.5) * ( randn(N,length(Omegai(i,:))) );%+...
-                                             %1i *randn( N,length(Omegai(i,:)) ) );
+   Hw(i*N-1:i*N , Omegai(i,:))  = sqrt(.5) * ( randn(N,length(Omegai(i,:))) +...
+                                             1i *randn( N,length(Omegai(i,:)) ) );
 
-   Hw(i*N-1:i*N , Omegac(:))    = sqrt(.5) * ( randn(N,length(Omegac)) );%+...
-                                           %1i *randn( N,length(Omegac) ) );
+   Hw(i*N-1:i*N , Omegac(:))    = sqrt(.5) * ( randn(N,length(Omegac)) +...
+                                           1i *randn( N,length(Omegac) ) );
 end
 
 %Creation of the concatenated channel matrix

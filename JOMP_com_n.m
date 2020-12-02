@@ -4,7 +4,7 @@ M    =160;           %transmit antennas
 N    =2;             %receive antennas
 K    =40;            %number of users
 sc   =6;             %common sparsity parameter
-s    =10;            %individual sparsity parameter
+s    =0;            %individual sparsity parameter
 P    =28;            %transmit SNR in dB
 eta1 =0.2;           %parameters used 
 eta2 =2;             %in JOMP alg.
@@ -194,7 +194,7 @@ end
         Omegac_est = [Omegac_est paths(index)];
         
         %======== D(Residual update)
-        L = X_hat(:,Omegac_est) * pinv(X_hat(:,Omegac_est)) ;
+        L = real( X_hat(:,Omegac_est) * pinv(X_hat(:,Omegac_est)) ) ;
     
         for ii=1:K
            R(:,ii*N-1:ii*N ) = ( diag( ones( length(X_hat(:,1)) ,1) ) - L ) * Y_hat(:,ii*N-1:ii*N);
@@ -225,7 +225,7 @@ end
         
         
             %B(Residual Update)
-            L = X_hat(:,Omega_vector) * pinv( X_hat(:,Omega_vector) );
+            L = real( X_hat(:,Omega_vector) * pinv( X_hat(:,Omega_vector) ) );
         
             R(:, i*N-1:i*N) = (diag(ones(length(X_hat(:,1)) ,1)) - L ) *Y_hat(:, i*N-1:i*N);
     
@@ -266,5 +266,5 @@ end
 
 
     %=========== NMSE
-    CSIT= norm( H - H_est ).^2 / norm( H ).^2;
+    CSIT= norm( H - H_est, 'fro' ).^2 / norm( H, 'fro' ).^2;
 end
