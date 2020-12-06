@@ -4,7 +4,7 @@ clear;
 M=      160;              %transmit antennas
 N=      2;                %receive antennas
 K=      40;               %number of users
-sc=     9;                %common sparsity parameter
+sc=     10;                %common sparsity parameter
 s=      17;               %individual sparsity parameter
 P=      28;               %transmit SNR in dB
 eta1=   0.2;              %parameters used 
@@ -79,9 +79,9 @@ end
 % Noise = sqrt( ( sqrt(.5)*( mean( abs(Y).^2 )./...
 %             ( 10^(28/10) ) ) ) ) .* ...
 %             ( (randn( size(Y) )) + 1i * randn( size(Y) ) );
-% 
+ 
 %Noisy output
-Y = awgn(Y,28) ;
+Y = awgn(Y,P) ;
 %===========================================
 %Beggining of the algorithm
 

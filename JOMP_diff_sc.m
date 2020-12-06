@@ -226,7 +226,7 @@ end
 %             if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
 %                 break;
 %             end
-%         
+        
             if( t >= (s - sc) )
                 break;
             end 
