@@ -1,4 +1,4 @@
-%%%%%%%%%%%% Different overhead snr %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%% Different snr %%%%%%%%%%%%%%%%%
 clc;
 clear;
 
@@ -21,7 +21,7 @@ clear;
 
 
 NMSE_diff_T =[];
-T = 31:70;
+T = 31:3:70;
 for i=1:length(T)
     CSIT = JOMP_diff_T(T(i));
     NMSE_diff_T = [NMSE_diff_T CSIT] ;
@@ -51,9 +51,6 @@ semilogy(sc,NMSE_diff_sc);
 title("NMSE of CSIT Versus Sc")
 xlabel("Sc (common sparsity level parameter)");
 ylabel("NMSE of CSIT");
-
-
-
 
 
 

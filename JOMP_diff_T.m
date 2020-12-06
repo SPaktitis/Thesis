@@ -258,5 +258,5 @@ end
 
 
     %=========== NMSE
-    CSIT= norm( H - H_est, 'fro' ).^2 / norm( H, 'fro' ).^2;
+    CSIT= norm( H - H_est, 'fro' )^2 / norm( H, 'fro' )^2;
 end

@@ -4,8 +4,8 @@ clear;
 M=      160;              %transmit antennas
 N=      2;                %receive antennas
 K=      40;               %number of users
-sc=     9;                %common sparsity parameter
-s=      17;               %individual sparsity parameter
+sc=     4;                %common sparsity parameter
+s=      6;               %individual sparsity parameter
 P=      28;               %transmit SNR in dB
 eta1=   0.2;              %parameters used 
 eta2=   2;                %in JOMP alg.
@@ -227,10 +227,10 @@ for i=1:K %for all users
         R(:, i*N-1:i*N) = (diag(ones(length(X_hat(:,1)) ,1)) - L ) *Y_hat(:, i*N-1:i*N);
     
     
-%         %terminating conditions
-%         if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
-%             break;
-%         end
+        %terminating conditions
+        if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
+            break;
+        end
         
         if( t >= (s - sc) )
             break;
