@@ -4,7 +4,7 @@ clear;
 M=      160;              %transmit antennas
 N=      2;                %receive antennas
 K=      40;               %number of users
-sc=     10;                %common sparsity parameter
+sc=     9;                %common sparsity parameter
 s=      17;               %individual sparsity parameter
 P=      28;               %transmit SNR in dB
 eta1=   0.2;              %parameters used 
@@ -13,10 +13,11 @@ Dt=     1/2;             %antenna spacing
 Dr=     1/2;             %antennas spacing
 Lt=     round(M/2);      %Transmit antenna length 
 Lr=     round(N/2);      %Receive antenna length
-T=45;                   %number of pilot symbols
+T=50;                   %number of pilot symbols
+NMSE = [];
 
 
-
+    
 %Creation of angular basis matrix At and Ar
 e=[];
 At=[];
@@ -44,10 +45,6 @@ for k=1:N
     er=[];
 end
 
-%Pilot matrix X
-Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
-X = At * Xa;
-
 %Creation of the concatenated 
 %Channel matrix Hw for K users
 Hw      = zeros(N*K,M);
@@ -68,20 +65,28 @@ for i=1:K
     H = [H; Ar * Hw(i*N-1:i*N,:) * At' ];
 end
 
-
-%%%%%%%%%
-Y=[];
-for i=1:K
-   Y(i*N-1:i*N,:) = H(i*N-1:i*N,:) * X; 
-end
-
+%for pkt=1:100
+    
+ %Pilot matrix X
+ Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
+ X = At * Xa;   
+ %%%%%%%%%
+ Y=[];
+ for i=1:K
+        Y(i*N-1:i*N,:) = H(i*N-1:i*N,:) * X; 
+ end 
+    
 % %White Gaussian noise with zero mean and unit variance
 % Noise = sqrt( ( sqrt(.5)*( mean( abs(Y).^2 )./...
 %             ( 10^(28/10) ) ) ) ) .* ...
 %             ( (randn( size(Y) )) + 1i * randn( size(Y) ) );
  
 %Noisy output
-Y = awgn(Y,P) ;
+% for i=1:K
+%    Y(i*N-1:i*N,:) = awgn( Y(i*N-1:i*N,:) , P ) ; 
+% end
+
+ Y = awgn(Y,P) ;
 %===========================================
 %Beggining of the algorithm
 
@@ -96,6 +101,8 @@ Y_hat=[];
 for i=1:K
     Y_hat(:,i*N-1:i*N) = sqrt(M/(P*T)) .* ( Y(i*N-1:i*N,:)' *Ar);
 end
+
+[Qf,Rf] = QR_factorization(X_hat);
 
 %N_hat = sqrt(M/(P*T)) .* N' *Ar;
 
@@ -125,7 +132,7 @@ for k = 1:sc
         
             [value , index] = max(tmp1);
             indexes = [indexes index];           
-            Ft = [Ft X_hat(:,index)];       
+            Ft = [Ft X_hat(:,index)]; 
             x2t = pinv(Ft) * R(:,j*N-1:j*N);
             at = Ft * x2t;
             rm = R(:,j*N-1:j*N) - at;
@@ -265,9 +272,11 @@ end
 
 
 %=========== NMSE
-norm( H - H_est , 'fro')^2 / norm( H, 'fro' )^2
+%norm( H - H_est , 'fro')^2 / norm( H, 'fro' )^2
+NMSE = [NMSE norm( H - H_est , 'fro')^2 / norm( H, 'fro' )^2];
+%end
+%sum(NMSE)/pkt
 
-% 
 % for i=1:K
 %  norm( H(i*N-1:i*N,:) - H_est(i*N-1:i*N,:) , 'fro')^2 / norm( H(i*N-1:i*N,:), 'fro' )^2
 % end

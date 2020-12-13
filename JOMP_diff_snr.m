@@ -13,7 +13,7 @@ Dr   =1/2;           %antennas spacing
 Lt   =round(M/2);    %Transmit antenna length 
 Lr   =round(N/2);    %Receive antenna length
 T    =45;             %number of pilot symbols
-
+NMSE =[];
 
 
 %Creation of angular basis matrix At and Ar
@@ -43,6 +43,9 @@ for k=1:N
     er=[];
 end
 
+
+
+for lamda=1:10
 %Pilot matrix X
     Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
     X = At * Xa;
@@ -258,5 +261,8 @@ end
 
 
     %=========== NMSE
-    CSIT= norm( H - H_est, 'fro' ).^2 / norm( H, 'fro' ).^2;
+    NMSE=[NMSE norm( H - H_est, 'fro' ).^2 / norm( H, 'fro' ).^2];
+    
+end
+    CSIT = sum(NMSE)/10;
 end

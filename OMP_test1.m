@@ -10,7 +10,7 @@ s=zeros(d,1); %arbitrary signal to recover
 %----manualy creating the sparse signal---------
 vector = randi([1 , d],m,1); %for easy check at sparsity indexes
 
-s(vector,1) = randi([1, 100],m,1);
+s(vector,1) = sqrt(.5) .*( randn( length(vector),1 ) +1i*randn( length(vector),1 ) );
 
 %-------------------------------------------
 
@@ -45,11 +45,15 @@ while (1)
     %update matrix Ft
     Ft = [Ft Fi(:,lt)];
     
+    %keeping Ft in QR factorization
+    [Q,R] = QR_factorization(Ft);
+    
+    xt = inv(R) * Q' * u;
 
     %least squears problem
     %im not sure if Ft is non singular
     %o Ft einai full column rank opote to pinv einai koble
-    xt = pinv(Ft)*u;     %to eipame me ton kurio liava
+    %xt = pinv(Ft)*u;     %to eipame me ton kurio liava
 
     %setp 5
     %Calculate the new approximation of data(they mean u) and the new residual

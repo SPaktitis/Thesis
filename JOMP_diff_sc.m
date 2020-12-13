@@ -13,7 +13,7 @@ Dr   =1/2;           %antennas spacing
 Lt   =round(M/2);    %Transmit antenna length 
 Lr   =round(N/2);    %Receive antenna length
 T    =45;            %number of pilot symbols
-
+NMSE=[];
 
 
 %Creation of angular basis matrix At and Ar
@@ -43,12 +43,6 @@ for k=1:N
     er=[];
 end
 
-%Pilot matrix X
-    Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
-    X = At * Xa;
-
-%Noise matrix N, lets start with real noise
-
 
 %Creation of the concatenated 
 %Channel matrix Hw for K users
@@ -68,6 +62,12 @@ H = [];
 for i=1:K
     H = [H; Ar * Hw(i*N-1:i*N,:) * At' ];
 end
+
+for lamda=1:100
+    
+ %Pilot matrix X
+ Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
+ X = At * Xa;
 
  %%%%%%%%%
  Y=[];
@@ -258,5 +258,8 @@ end
 
 
     %=========== NMSE
-    CSIT= norm( H - H_est, 'fro' ).^2 / norm( H, 'fro' ).^2;
+    NMSE= norm( H - H_est, 'fro' ).^2 / norm( H, 'fro' ).^2;
+end
+    CSIT = sum(NMSE)/100;
+
 end

@@ -1,19 +1,19 @@
 clc;
 clear;
 
-M=160;              %transmit antennas
-N=2;                %receive antennas
-K=40;               %number of users
-sc=2;               %common sparsity parameter
-s=4;               %individual sparsity parameter
-P=28;               %transmit SNR in dB
-eta1=0.2;           %parameters used 
-eta2=2;             %in JOMP alg.
-Dt=1/2;             %antenna spacing
-Dr=1/2;             %antennas spacing
-Lt=round(M/2);      %Transmit antenna length 
-Lr=round(N/2);      %Receive antenna length
-T=50;               %number of pilot symbols
+M    =160;           %transmit antennas
+N    =2;             %receive antennas
+K    =40;            %number of users
+sc   =9;             %common sparsity parameter
+s    =17;            %individual sparsity parameter
+P    =28;            %transmit SNR in dB
+eta1 =0.2;           %parameters used 
+eta2 =2;             %in JOMP alg.
+Dt   =1/2;           %antenna spacing
+Dr   =1/2;           %antennas spacing
+Lt   =round(M/2);    %Transmit antenna length 
+Lr   =round(N/2);    %Receive antenna length
+                     %number of pilot symbols
 
 
 
@@ -45,20 +45,22 @@ for k=1:N
 end
 
 %Pilot matrix X
-Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
-X = At * Xa;
+    Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
+    X = At * Xa;
+
+%Noise matrix N, lets start with real noise
+
 
 %Creation of the concatenated 
 %Channel matrix Hw for K users
-Hw      = zeros(N*K,M);
-Omegai  =  randi([1 M],K,s-sc);
-Omegac  = unique( randi([1 M],sc,1), 'sorted' );
+Hw     = zeros(N*K,M);
+Omegai = randi([1 M],K,s-sc);
+Omegac = randi([1 M],sc,1);
 for i=1:K   
-   Hw(i*N-1:i*N , Omegai(i,:))  = sqrt(.5) * ( randn(N,length(Omegai(i,:))) +...
-                                             1i *randn( N,length(Omegai(i,:)) ) );
-
-   Hw(i*N-1:i*N , Omegac(:))    = sqrt(.5) * ( randn(N,length(Omegac)) +...
-                                           1i *randn( N,length(Omegac) ) );
+   Hw(i*N-1:i*N , Omegai(i,:))  = sqrt(.5)  * ( randn( N,length(Omegai(i,:)) ) + 1i*randn( N,length(Omegai(i,:)) ) );
+   
+   Hw(i*N-1:i*N , Omegac(:))    =sqrt(.5) *(randn( N,length(Omegac) ) + 1i*randn( N,length(Omegac) ) );
+   
 end
 
 %Creation of the concatenated channel matrix
@@ -68,54 +70,51 @@ for i=1:K
     H = [H; Ar * Hw(i*N-1:i*N,:) * At' ];
 end
 
+ %%%%%%%%%
+ Y=[];
+ for i=1:K
+    Y(i*N-1:i*N,:) = H(i*N-1:i*N,:) * X; 
+ end              
+ 
+ %Noisy output
+ for i=1:K
+   Y(i*N-1:i*N,:) = awgn( Y(i*N-1:i*N,:) , P ) ; 
+ end
 
-%%%%%%%%%
-Y=[];
-for i=1:K
-   Y(i*N-1:i*N,:) = H(i*N-1:i*N,:) * X; 
-end
+%Y = awgn(Y,P);
 
-% %White Gaussian noise with zero mean and unit variance
-% Noise = sqrt( ( sqrt(.5)*( mean( abs(Y).^2 )./...
-%             ( 10^(28/10) ) ) ) ) .* ...
-%             ( (randn( size(Y) )) + 1i * randn( size(Y) ) );
-% 
-% %Noisy output
-% Y = Y + Noise;
 %===========================================
 %Beggining of the algorithm
 
-%step1
-%Calculate hat amounts
-X_hat = sqrt(M/(P*T)) .* (X' *At);
-H_hat = Hw' ;
+    %step1
+    %Calculate hat amounts
+    X_hat = sqrt(M/(P*T)) .* (X' *At);
+    H_hat = Hw' ;
 
-Noise_hat =[];
+    Y_hat=[];
+    for j=1:K
+        Y_hat(:,j*N-1:j*N) = sqrt(M/(P*T)) .* ( Y(j*N-1:j*N,:)' *Ar);
+    end
 
-Y_hat=[];
-for i=1:K
-    Y_hat(:,i*N-1:i*N) = sqrt(M/(P*T)) .* ( Y(i*N-1:i*N,:)' *Ar);
-end
+    %N_hat = sqrt(M/(P*T)) .* N' *Ar;
 
-%N_hat = sqrt(M/(P*T)) .* N' *Ar;
+    %step2(Common support identification)
+    R = Y_hat ;
+    Omegac_est = [];
 
-%step2(Common support identification)
-R =  Y_hat ;
-Omegac_est = [];
-
-for k = 1:sc
+    for k = 1:sc
     
-    paths = [];
-    times = [];
-    for j = 1:K %for each user calculate Omegai_est
+        paths = [];
+        times = [];
+        for j = 1:K %for each user calculate Omegai_est
         
-        indexes=[];
-        Ft = [];
-        rm = R(:,j*N-1:j*N);
+            indexes=[];
+            Ft = [];
+            rm = R(:,j*N-1:j*N);
         
-        %find the sc - |Omegac_est| columns we need
-        it=0;
-        while(1)
+            %find the sc - |Omegac_est| columns we need
+            it=0;
+            while(1)
             it=it+1;    %iterations
             
             %Modified OMP to solve problem at A for 1 user            
@@ -133,145 +132,138 @@ for k = 1:sc
             if( norm(rm)<10^-6 )
                 break
             end
-        end     
+            end     
                 
         
-        %====== B (Support pruning)
-        l=[];
-        for i=1:length(indexes)
-            if(  norm(X_hat(:,indexes)' * R(:,j*N-1:j*N) , 'fro')^2 >= (eta1*N) ) 
-                l = [l indexes(i)]; 
-            end    
-        end
+                %====== B (Support pruning)
+                l=[];
+                for i=1:length(indexes)
+                    if(  norm(X_hat(:,indexes)' * R(:,j*N-1:j*N) , 'fro')^2 >= (eta1*N) ) 
+                        l = [l indexes(i)]; 
+                    end    
+                end
         
-        %the following if/else is implementing the step C(Support Update)
-        %update paths and times matrices
-        if( isempty(paths) )
-            paths = l;
-            times = ones( 1,length(paths) );
-        else
-            for i=1:length(l) %for each element in vector l
-               flag = 0;
-               for ii = 1:length(paths)
-                   if ( paths(1,ii) == l(i) ) %if the path allready exists
-                       times(1,ii) = times(1,ii)+1;
-                       flag =1;  
-                   end %end if
-               end %endfor paths matrix 
+                %the following if/else is implementing the step C(Support Update)
+                %update paths and times matrices
+                if( isempty(paths) )
+                    paths = l;
+                    times = ones( 1,length(paths) );
+                else
+                    for i=1:length(l) %for each element in vector l
+                        flag = 0;
+                        for ii = 1:length(paths)
+                            if ( paths(1,ii) == l(i) ) %if the path allready exists
+                                times(1,ii) = times(1,ii)+1;
+                                flag =1;  
+                            end %end if
+                        end %endfor paths matrix 
                
-               % l(i) is not in paths matrix
-               if( not(flag) )
-                   paths = [paths l(i)];
-                   times = [times 1];
-               end    
-            end %endfor l matrix            
-        end %end if
-    end %end for all users
+                        % l(i) is not in paths matrix
+                        if( not(flag) )
+                            paths = [paths l(i)];
+                            times = [times 1];
+                        end    
+                    end %endfor l matrix            
+                end %end if
+        end %end for all users
     
-    %======= C(Support Update)
-    [value , index] = max(times);
-    %bellow is a some code to deal with a situational problems
-    %where the last support index is not retrieved correctly
-    if( not(isempty(Omegac_est)) )
-        t=1;
-        while(1)
-          if( paths(index) == Omegac_est(t) )
-              times(index)   = 0;
-              [value, index] = max(times);
-              t=1;
-          else
-              t=t+1;
-          end
+        %======= C(Support Update)
+        [value , index] = max(times);
+        %bellow is a some code to deal with a situational problems
+        %where the last support index is not retrieved correctly
+        if( not(isempty(Omegac_est)) )
+           t=1;
+           while(1)
+              if( paths(index) == Omegac_est(t) )
+                 times(index)   = 0;
+                 [value, index] = max(times);
+                 t=1;
+               else
+                 t=t+1;
+               end
           
-          if( t>length(Omegac_est) )
-              break;
-          end
+               if( t>length(Omegac_est) )
+                 break;
+               end
+            end      
+        end    
+        %update the indexes
+        Omegac_est = [Omegac_est paths(index)];
+        
+        %======== D(Residual update)
+        L = real( X_hat(:,Omegac_est) * pinv(X_hat(:,Omegac_est)) ) ;
+    
+        for ii=1:K
+           R(:,ii*N-1:ii*N ) = ( diag( ones( length(X_hat(:,1)) ,1) ) - L ) * Y_hat(:,ii*N-1:ii*N);
         end
        
-    end    
-    %update the indexes
-    Omegac_est = [Omegac_est paths(index)];
-    
-    %======== D(Residual update)
-    L = real( X_hat(:,Omegac_est) * pinv(X_hat(:,Omegac_est)) );
-    
-    for ii=1:K
-       R(:,ii*N-1:ii*N ) = ( diag( ones( length(X_hat(:,1)) ,1) ) - L ) * Y_hat(:,ii*N-1:ii*N);
     end
-       
-end
 
 
-%===================  STEP 3 ==================================
-Omegai_est = {};
-%R = real( Y_hat );
-L =[];
-Omega_vector =[];
-for i=1:K %for all users
-    Omega_vector = Omegac_est;
-    t=0;    %iterations counter   
-    while (1)
-        t=t+1;
-        %Alfa(Upport Update)       
-        tmp=[];
-        for j=1:M
-            tmp(j) = norm( X_hat(:,j)' *R(:, i*N-1:i*N) ) /norm(X_hat(:,j));
+    %===================  STEP 3 ==================================
+    Omegai_est = {};
+    %R = real( Y_hat );
+    L =[];
+    Omega_vector =[];
+    for i=1:K %for all users
+        Omega_vector = Omegac_est;
+        t=0;    %iterations counter   
+        while (1)
+            t=t+1;
+            %Alfa(Upport Update)       
+            tmp=[];
+            for j=1:M
+                tmp(j) = norm( X_hat(:,j)' *R(:, i*N-1:i*N) ) /norm(X_hat(:,j));
+            end
+            
+            [value, index] = max(tmp);
+            
+            Omega_vector = [Omega_vector index];
+        
+        
+            %B(Residual Update)
+            L = real( X_hat(:,Omega_vector) * pinv( X_hat(:,Omega_vector) ) );
+        
+            R(:, i*N-1:i*N) = (diag(ones(length(X_hat(:,1)) ,1)) - L ) *Y_hat(:, i*N-1:i*N);
+    
+    
+%             %terminating conditions
+%             if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
+%                 break;
+%             end
+%         
+            if( t >= (s - sc) )
+                break;
+            end 
+        end %end while  
+    
+        %update Omega-_est matrix
+        if( isempty(Omegai_est) )
+            Omegai_est = {Omega_vector};
+        else
+            Omegai_est = [Omegai_est; {Omega_vector}];
         end
-        [value, index] = max(tmp);   
-        Omega_vector = [Omega_vector index];
-        
-        
-        %B(Residual Update)
-        L = X_hat(:,Omega_vector) * pinv( X_hat(:,Omega_vector) );
-        
-        R(:, i*N-1:i*N) = (diag(ones(length(X_hat(:,1)) ,1)) - L ) *Y_hat(:, i*N-1:i*N);
     
+    end %end for
+
     
-%         %terminating conditions
-%         if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
-%             break;
-%         end
-        
-        if( t >= (s - sc) )
-            break;
-        end
-        
-        
-    end %end while  
-    
-    %update Omega-_est matrix
-    if( isempty(Omegai_est) )
-        Omegai_est = {Omega_vector};
-    else
-        Omegai_est = [Omegai_est; {Omega_vector}];
+    %============== STEP4 ===================
+    H_est = zeros(N*K,M);
+    H_est_hat = zeros(M,N*K);
+    for i=1:K
+        vector = [];
+   
+        vector = cell2mat(Omegai_est(i,1));
+   
+        H_est_hat(sort(vector) , i*N-1:i*N ) = pinv( X_hat(:,sort(vector) ) ) * Y_hat(: ,i*N-1:i*N) ;
+   
+        H_est(i*N-1:i*N,:) = Ar * H_est_hat(:,i*N-1:i*N)' * At' ;
+   
     end
-    
-end %end for
-
-    
-%============== STEP4 ===================
-H_est = zeros(N*K,M);
-H_est_hat = zeros(M,N*K);
-for i=1:K
-   vector = [];
-   
-   vector = cell2mat(Omegai_est(i,1));
-   
-   H_est_hat(sort(vector) , i*N-1:i*N ) = pinv( X_hat(:,sort(vector) ) ) * Y_hat(: ,i*N-1:i*N) ;
-   
-   H_est(i*N-1:i*N,:) = Ar * H_est_hat(:,i*N-1:i*N)' * At' ;
-   
-end
 
 
-%=========== NMSE
-norm( H - H_est , 'fro')^2 / norm( H, 'fro' )^2
-
-
-for i=1:K
- norm( H(i*N-1:i*N,:) - H_est(i*N-1:i*N,:) , 'fro')^2 / norm( H(i*N-1:i*N,:), 'fro' )^2
-end
-
+    %=========== NMSE
+    CSIT= norm( H - H_est, 'fro' )^2 / norm( H, 'fro' )^2;
 
 
 
