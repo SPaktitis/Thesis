@@ -19,6 +19,7 @@ s(vector,1) = sqrt(.5) .*( randn( length(vector),1 ) +1i*randn( length(vector),1
 %with Normal Distribution
 Fi = normrnd(0,1/N,N,d);
 
+[Q,R] = QR_factorization(Fi)
 
 %step 1
 L=[];        %Index set of lt(lamda taf)
@@ -45,10 +46,7 @@ while (1)
     %update matrix Ft
     Ft = [Ft Fi(:,lt)];
     
-    %keeping Ft in QR factorization
-    [Q,R] = QR_factorization(Ft);
-    
-    xt = inv(R) * Q' * u;
+    xt = inv(R) * Q(:,L)' * u;
 
     %least squears problem
     %im not sure if Ft is non singular

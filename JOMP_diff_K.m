@@ -1,19 +1,21 @@
-function CSIT = JOMP_com_n(T)
+function CSIT = JOMP_diff_K(Kappa)
 
-M    =160;           %transmit antennas
-N    =2;             %receive antennas
-K    =40;            %number of users
-sc   =9;             %common sparsity parameter
-s    =17;            %individual sparsity parameter
-P    =28;            %transmit SNR in dB
-eta1 =0.2;           %parameters used 
-eta2 =2;             %in JOMP alg.
-Dt   =1/2;           %antenna spacing
-Dr   =1/2;           %antennas spacing
-Lt   =round(M/2);    %Transmit antenna length 
-Lr   =round(N/2);    %Receive antenna length
-                     %number of pilot symbols
+M      =160;           %transmit antennas
+N      =2;             %receive antennas
+K      =Kappa;         %number of users
+sc     =9;             %common sparsity parameter
+s      =17;            %individual sparsity parameter
+SNR_dB =28;            %transmit SNR in dB
+eta1   =0.2;           %parameters used 
+eta2   =2;             %in JOMP alg.
+Dt     =1/2;           %antenna spacing
+Dr     =1/2;           %antennas spacing
+Lt     =round(M/2);    %Transmit antenna length 
+Lr     =round(N/2);    %Receive antenna length
+T      =45;            %number of pilot symbols
 
+P = M * 10^(SNR_dB/10) ;    %quantity used to adjust the trasnmitt snr
+NMSE=[];
 
 
 %Creation of angular basis matrix At and Ar
@@ -44,11 +46,11 @@ for k=1:N
 end
 
 %Pilot matrix X
-    Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
-    X = At * Xa;
+Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
+X = At * Xa;
 
-%Noise matrix N, lets start with real noise
-
+for lamda=1:100
+    
 
 %Creation of the concatenated 
 %Channel matrix Hw for K users
@@ -56,9 +58,9 @@ Hw     = zeros(N*K,M);
 Omegai = randi([1 M],K,s-sc);
 Omegac = randi([1 M],sc,1);
 for i=1:K   
-   Hw(i*N-1:i*N , Omegai(i,:))  = sqrt(.5)  * ( randn( N,length(Omegai(i,:)) ) + 1i*randn( N,length(Omegai(i,:)) ) );
+   Hw(i*N-(N-1):i*N , Omegai(i,:))  = sqrt(.5)  * ( randn( N,length(Omegai(i,:)) ) + 1i*randn( N,length(Omegai(i,:)) ) );
    
-   Hw(i*N-1:i*N , Omegac(:))    =sqrt(.5) *(randn( N,length(Omegac) ) + 1i*randn( N,length(Omegac) ) );
+   Hw(i*N-(N-1):i*N , Omegac(:))    =sqrt(.5) *(randn( N,length(Omegac) ) + 1i*randn( N,length(Omegac) ) );
    
 end
 
@@ -66,17 +68,25 @@ end
 %Hi for all K users
 H = [];
 for i=1:K
-    H = [H; Ar * Hw(i*N-1:i*N,:) * At' ];
+    H = [H; Ar * Hw(i*N-(N-1):i*N,:) * At' ];
 end
 
  %%%%%%%%%
  Y=[];
  for i=1:K
-    Y(i*N-1:i*N,:) = H(i*N-1:i*N,:) * X; 
+    Y(i*N-(N-1):i*N,:) = H(i*N-(N-1):i*N,:) * X; 
  end              
  
- %Noisy output
- Y = awgn(Y,28);
+%  Noise=[];
+% %Noisy output       
+% for i=1:N*K
+%     Noise = [Noise; sqrt( (  sqrt(.5)*( mean(abs(Y(i,:)).^2) ...
+%                         / (10^(P/10) ) ) ) ).*...
+%                         ( randn(1,T) + 1i * randn(1,T) ) ];
+% end
+
+Noise = sqrt(.5) .* ( randn( size(Y) ) + 1i *randn( size(Y) ) );
+Y = Y + Noise;
 
 %===========================================
 %Beggining of the algorithm
@@ -88,7 +98,7 @@ end
 
     Y_hat=[];
     for j=1:K
-        Y_hat(:,j*N-1:j*N) = sqrt(M/(P*T)) .* ( Y(j*N-1:j*N,:)' *Ar);
+        Y_hat(:,j*N-(N-1):j*N) = sqrt(M/(P*T)) .* ( Y(j*N-(N-1):j*N,:)' *Ar);
     end
 
     %N_hat = sqrt(M/(P*T)) .* N' *Ar;
@@ -105,7 +115,7 @@ end
         
             indexes=[];
             Ft = [];
-            rm = R(:,j*N-1:j*N);
+            rm = R(:,j*N-(N-1):j*N);
         
             %find the sc - |Omegac_est| columns we need
             it=0;
@@ -120,9 +130,9 @@ end
             [value , index] = max(tmp1);
             indexes = [indexes index];           
             Ft = [Ft X_hat(:,index)];       
-            x2t = pinv(Ft) * R(:,j*N-1:j*N);
+            x2t = pinv(Ft) * R(:,j*N-(N-1):j*N);
             at = Ft * x2t;
-            rm = R(:,j*N-1:j*N) - at;
+            rm = R(:,j*N-(N-1):j*N) - at;
             
             if( norm(rm)<10^-6 )
                 break
@@ -133,7 +143,7 @@ end
                 %====== B (Support pruning)
                 l=[];
                 for i=1:length(indexes)
-                    if(  norm(X_hat(:,indexes)' * R(:,j*N-1:j*N) , 'fro')^2 >= (eta1*N) ) 
+                    if(  norm(X_hat(:,indexes)' * R(:,j*N-(N-1):j*N) , 'fro')^2 >= (eta1*N) ) 
                         l = [l indexes(i)]; 
                     end    
                 end
@@ -189,7 +199,7 @@ end
         L = real( X_hat(:,Omegac_est) * pinv(X_hat(:,Omegac_est)) ) ;
     
         for ii=1:K
-           R(:,ii*N-1:ii*N ) = ( diag( ones( length(X_hat(:,1)) ,1) ) - L ) * Y_hat(:,ii*N-1:ii*N);
+           R(:,ii*N-(N-1):ii*N ) = ( diag( ones( length(X_hat(:,1)) ,1) ) - L ) * Y_hat(:,ii*N-(N-1):ii*N);
         end
        
     end
@@ -208,7 +218,7 @@ end
             %Alfa(Upport Update)       
             tmp=[];
             for j=1:M
-                tmp(j) = norm( X_hat(:,j)' *R(:, i*N-1:i*N) ) /norm(X_hat(:,j));
+                tmp(j) = norm( X_hat(:,j)' *R(:, i*N-(N-1):i*N) ) /norm(X_hat(:,j));
             end
             
             [value, index] = max(tmp);
@@ -219,14 +229,14 @@ end
             %B(Residual Update)
             L = real( X_hat(:,Omega_vector) * pinv( X_hat(:,Omega_vector) ) );
         
-            R(:, i*N-1:i*N) = (diag(ones(length(X_hat(:,1)) ,1)) - L ) *Y_hat(:, i*N-1:i*N);
+            R(:, i*N-(N-1):i*N) = (diag(ones(length(X_hat(:,1)) ,1)) - L ) *Y_hat(:, i*N-(N-1):i*N);
     
     
 %             %terminating conditions
 %             if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
 %                 break;
 %             end
-%         
+        
             if( t >= (s - sc) )
                 break;
             end 
@@ -250,13 +260,16 @@ end
    
         vector = cell2mat(Omegai_est(i,1));
    
-        H_est_hat(sort(vector) , i*N-1:i*N ) = pinv( X_hat(:,sort(vector) ) ) * Y_hat(: ,i*N-1:i*N) ;
+        H_est_hat(sort(vector) , i*N-(N-1):i*N ) = pinv( X_hat(:,sort(vector) ) ) * Y_hat(: ,i*N-(N-1):i*N) ;
    
-        H_est(i*N-1:i*N,:) = Ar * H_est_hat(:,i*N-1:i*N)' * At' ;
+        H_est(i*N-(N-1):i*N,:) = Ar * H_est_hat(:,i*N-(N-1):i*N)' * At' ;
    
     end
 
 
     %=========== NMSE
-    CSIT= norm( H - H_est, 'fro' ).^2 / norm( H, 'fro' ).^2;
+    NMSE= norm( H - H_est, 'fro' ).^2 / norm( H, 'fro' ).^2;
+end
+    CSIT = sum(NMSE)/lamda;
+
 end

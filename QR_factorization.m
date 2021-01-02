@@ -1,5 +1,7 @@
 function [Q, R] = QR_factorization(A)
 
+
+A=randn(10,5);
 [rows ,col]=size(A);
 
 %Matrix Q

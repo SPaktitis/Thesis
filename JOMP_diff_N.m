@@ -1,18 +1,18 @@
-function CSIT = JOMP_diff_snr(snr)
+function CSIT = JOMP_diff_N(n)
 
 M      =160;           %transmit antennas
-N      =2;             %receive antennas
+N      =n;             %receive antennas
 K      =40;            %number of users
 sc     =9;             %common sparsity parameter
 s      =17;            %individual sparsity parameter
-SNR_dB =snr;           %transmit SNR in dB
+SNR_dB =28;            %transmit SNR in dB
 eta1   =0.2;           %parameters used 
 eta2   =2;             %in JOMP alg.
 Dt     =1/2;           %antenna spacing
 Dr     =1/2;           %antennas spacing
 Lt     =round(M/2);    %Transmit antenna length 
 Lr     =round(N/2);    %Receive antenna length
-T      =45;             %number of pilot symbols
+T      =45;            %number of pilot symbols
 
 P = M * 10^(SNR_dB/10) ;    %quantity used to adjust the trasnmitt snr
 NMSE =[];
@@ -51,7 +51,7 @@ X = At * Xa;
 
 
 for lamda=1:100
-
+    
 %Creation of the concatenated 
 %Channel matrix Hw for K users
 Hw     = zeros(N*K,M);
@@ -69,14 +69,18 @@ end
 H = [];
 for i=1:K
     H = [H; Ar * Hw(i*N-(N-1):i*N,:) * At' ];
-end
+end   
+
 
  %%%%%%%%%
- Y = zeros(N*K,T);
- Noise = sqrt(.5) .* ( randn( size(Y) ) + 1i *randn( size(Y) ) );
+ Y=[];
  for i=1:K
-    Y(i*N-(N-1):i*N,:) = H(i*N-(N-1):i*N,:) * X + Noise(i*N-(N-1):i*N,:) ; 
- end 
+    Y(i*N-(N-1):i*N,:) = H(i*N-(N-1):i*N,:) * X; 
+ end              
+
+
+Noise = sqrt(.5) .* ( randn( size(Y) ) + 1i *randn( size(Y) ) );
+Y = Y + Noise;
 
 %===========================================
 %Beggining of the algorithm
@@ -258,8 +262,9 @@ end
 
 
     %=========== NMSE
-    NMSE=[NMSE norm( H - H_est, 'fro' ).^2 / norm( H, 'fro' ).^2];
+    NMSE=[NMSE norm( H - H_est, 'fro' )^2 / norm( H, 'fro' )^2];
     
 end
-    CSIT = sum(NMSE)/lamda;
+
+CSIT = sum(NMSE)/lamda;
 end
