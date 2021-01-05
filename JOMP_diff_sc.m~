@@ -50,7 +50,7 @@ end
 for lamda=1:100 %pkts
     
 %Creation of the concatenated 
-%channel matrix Hw for K users
+%Channel matrix Hw for K users
 Hw     = zeros(N*K,M);
 Omegai = randi([1 M],K,s-sc);
 Omegac = randi([1 M],sc,1);

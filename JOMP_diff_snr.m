@@ -45,9 +45,7 @@ for k=1:N
     er=[];
 end
 
-%Pilot matrix X
-Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
-X = At * Xa;
+
 
 
 for lamda=1:100
@@ -70,6 +68,10 @@ H = [];
 for i=1:K
     H = [H; Ar * Hw(i*N-(N-1):i*N,:) * At' ];
 end
+
+%Pilot matrix X
+Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
+X = At * Xa;
 
  %%%%%%%%%
  Y = zeros(N*K,T);

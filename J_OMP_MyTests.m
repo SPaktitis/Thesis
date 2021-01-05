@@ -4,7 +4,7 @@ clear;
 M=       160;              %transmit antennas
 N=       2;                %receive antennas
 K=       40;               %number of users
-sc=      3;                %common sparsity parameter
+sc=      9;                %common sparsity parameter
 s=       17;               %individual sparsity parameter
 SNR_dB=  28;               %transmit SNR in dB
 eta1=    0.2;              %parameters used 
@@ -13,7 +13,7 @@ Dt=      1/2;             %antenna spacing
 Dr=      1/2;             %antennas spacing
 Lt=      round(M/2);      %Transmit antenna length 
 Lr=      round(N/2);      %Receive antenna length
-T=45;                     %number of pilot symbols
+T=30;                     %number of pilot symbols
 
 
 NMSE = [];
@@ -47,10 +47,6 @@ for k=1:N
     er=[];
 end
 
-%Pilot matrix X
-Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
-X = At * Xa;
-
 
 for lamda=1:100
 
@@ -74,6 +70,9 @@ for i=1:K
     H = [H; Ar * Hw(i*N-(N-1):i*N,:) * At' ];
 end
 
+%Pilot matrix X
+Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
+X = At * Xa;
   
  %%%%%%%%%
  Y = zeros(N*K,T);
@@ -81,6 +80,7 @@ end
  for i=1:K
     Y(i*N-(N-1):i*N,:) = H(i*N-(N-1):i*N,:) * X + Noise(i*N-(N-1):i*N,:) ; 
  end  
+ 
 %  Y=[];   
 %  for i=1:K
 %     Y(i*N-(N-1):i*N,:) = H(i*N-(N-1):i*N,:) * X; 
@@ -231,7 +231,7 @@ for i=1:K %for all users
         
         
         %B(Residual Update)
-        L = X_hat(:,Omega_vector) * pinv( X_hat(:,Omega_vector) );
+         L = X_hat(:,Omega_vector) * pinv( X_hat(:,Omega_vector) );
         
         R(:, i*N-(N-1):i*N) = (diag(ones(length(X_hat(:,1)) ,1)) - L ) *Y_hat(:, i*N-(N-1):i*N);
     
