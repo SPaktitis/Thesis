@@ -46,24 +46,29 @@ for k=1:N
 end
 
 
-
-
-for lamda=1:100
+for pkt_num=1:200
 
 %Creation of the concatenated 
 %Channel matrix Hw for K users
-Hw     = zeros(N*K,M);
-Omegai = randi([1 M],K,s-sc);
-Omegac = randi([1 M],sc,1);
-for i=1:K   
-   Hw(i*N-(N-1):i*N , Omegai(i,:))  = sqrt(.5)  * ( randn( N,length(Omegai(i,:)) ) + 1i*randn( N,length(Omegai(i,:)) ) );
+Hw      =  zeros(N*K,M);
+Omegai  = {};
+Omegac  = unique( randi([1 M],randi([sc sc+2]),1), 'sorted' );
+for i=1:K
+   %the 2 lines of code bellow are used to generate a sparsity value around the given
+   %boundary with a small but completely specified variance
+   temp = randi([1 M],1,randi([s-2 s],1,1) - length(Omegac) ) ;
+   Omegai  = [Omegai;  {temp} ];
    
-   Hw(i*N-(N-1):i*N , Omegac(:))    =sqrt(.5) *(randn( N,length(Omegac) ) + 1i*randn( N,length(Omegac) ) );
-   
+   Hw(i*N-(N-1):i*N , temp)  = sqrt(.5) * ( randn(N,length( temp )) +...
+                                             1i *randn( N,length( temp ) ) );
+
+   Hw(i*N-(N-1):i*N , Omegac(:))    = sqrt(.5) * ( randn(N,length(Omegac)) +...
+                                           1i *randn( N,length(Omegac) ) );
 end
 
 %Creation of the concatenated channel matrix
 %Hi for all K users
+%mporei kai na mhn xreiazetai....
 H = [];
 for i=1:K
     H = [H; Ar * Hw(i*N-(N-1):i*N,:) * At' ];
@@ -80,20 +85,21 @@ X = At * Xa;
     Y(i*N-(N-1):i*N,:) = H(i*N-(N-1):i*N,:) * X + Noise(i*N-(N-1):i*N,:) ; 
  end 
 
-%===========================================
-%Beggining of the algorithm
+%================ Beggining of the algorithm ==========================
+%
 
     %step1
     %Calculate hat amounts
     X_hat = sqrt(M/(P*T)) .* (X' *At);
-    H_hat = Hw' ;
+    %H_hat = Hw' ;
 
     Y_hat=[];
-    for j=1:K
-        Y_hat(:,j*N-(N-1):j*N) = sqrt(M/(P*T)) .* ( Y(j*N-(N-1):j*N,:)' *Ar);
+    %N_hat=[];
+    for i=1:K
+        Y_hat(:,i*N-(N-1):i*N) = sqrt(M/(P*T)) .* ( Y(i*N-(N-1):i*N,:)' *Ar);
+        %N_hat( :,i*N-(N-1):i*N ) = sqrt( M/(P*T) ) * Noise( i*N-(N-1):i*N,: )' *Ar ;   
+        %Y_hat(:,i*N-(N-1):i*N) = X_hat * H_hat( :,i*N-(N-1):i*N ) + N_hat( :,i*N-(N-1):i*N ) ;
     end
-
-    %N_hat = sqrt(M/(P*T)) .* N' *Ar;
 
     %step2(Common support identification)
     R = Y_hat ;
@@ -103,13 +109,13 @@ X = At * Xa;
     
         paths = [];
         times = [];
-        for j = 1:K %for each user calculate Omegai_est
+        for j = 1:K %for each user calculate Omegac_est
         
             indexes=[];
             Ft = [];
             rm = R(:,j*N-(N-1):j*N);
         
-            %find the sc - |Omegac_est| columns we need
+            %find the si - |Omegac_est| columns we need
             it=0;
             while(1)
             it=it+1;    %iterations
@@ -153,7 +159,7 @@ X = At * Xa;
                                 times(1,ii) = times(1,ii)+1;
                                 flag =1;  
                             end %end if
-                        end %endfor paths matrix 
+                        end %end for paths matrix 
                
                         % l(i) is not in paths matrix
                         if( not(flag) )
@@ -166,7 +172,7 @@ X = At * Xa;
     
         %======= C(Support Update)
         [value , index] = max(times);
-        %bellow is a some code to deal with a situational problems
+        %bellow is some code to deal with a situational problem
         %where the last support index is not retrieved correctly
         if( not(isempty(Omegac_est)) )
            t=1;
@@ -199,9 +205,9 @@ X = At * Xa;
 
     %===================  STEP 3 ==================================
     Omegai_est = {};
-    %R = real( Y_hat );
     L =[];
     Omega_vector =[];
+    
     for i=1:K %for all users
         Omega_vector = Omegac_est;
         t=0;    %iterations counter   
@@ -224,22 +230,19 @@ X = At * Xa;
             R(:, i*N-(N-1):i*N) = (diag(ones(length(X_hat(:,1)) ,1)) - L ) *Y_hat(:, i*N-(N-1):i*N);
     
     
-%             %terminating conditions
-%             if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
-%                 break;
-%             end
-%         
+            %terminating conditions
+            if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
+                break;
+            end
+        
             if( t >= (s - sc) )
                 break;
             end 
         end %end while  
     
         %update Omega-_est matrix
-        if( isempty(Omegai_est) )
-            Omegai_est = {Omega_vector};
-        else
-            Omegai_est = [Omegai_est; {Omega_vector}];
-        end
+        Omegai_est = [Omegai_est; {Omega_vector}];
+        
     
     end %end for
 
@@ -263,5 +266,5 @@ X = At * Xa;
     NMSE=[NMSE norm( H - H_est, 'fro' ).^2 / norm( H, 'fro' ).^2];
     
 end
-    CSIT = sum(NMSE)/lamda;
+    CSIT = sum(NMSE)/pkt_num;
 end

@@ -46,23 +46,24 @@ for k=1:N
 end
 
 
-%Pilot matrix X
-Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
-X = At * Xa;
-
-
-for lamda=1:100
+for lamda=1:100 %pkts
     
 %Creation of the concatenated 
 %Channel matrix Hw for K users
-Hw     = zeros(N*K,M);
-Omegai = randi([1 M],K,s-sc);
-Omegac = randi([1 M],sc,1);
-for i=1:K   
-   Hw(i*N-(N-1):i*N , Omegai(i,:))  = sqrt(.5)  * ( randn( N,length(Omegai(i,:)) ) + 1i*randn( N,length(Omegai(i,:)) ) );
+Hw      =  zeros(N*K,M);
+Omegai  = {};
+Omegac  = unique( randi([1 M],randi([sc sc+2]),1), 'sorted' );
+for i=1:K
+   %the 2 lines of code bellow are used to generate a sparsity value around the given
+   %boundary with a small but completely specified variance
+   temp = randi([1 M],1,randi([s-2 s],1,1) - length(Omegac) ) ;
+   Omegai  = [Omegai;  {temp} ];
    
-   Hw(i*N-(N-1):i*N , Omegac(:))    =sqrt(.5) *(randn( N,length(Omegac) ) + 1i*randn( N,length(Omegac) ) );
-   
+   Hw(i*N-(N-1):i*N , temp)  = sqrt(.5) * ( randn(N,length( temp )) +...
+                                             1i *randn( N,length( temp ) ) );
+
+   Hw(i*N-(N-1):i*N , Omegac(:))    = sqrt(.5) * ( randn(N,length(Omegac)) +...
+                                           1i *randn( N,length(Omegac) ) );
 end
 
 %Creation of the concatenated channel matrix
@@ -72,6 +73,9 @@ for i=1:K
     H = [H; Ar * Hw(i*N-(N-1):i*N,:) * At' ];
 end   
 
+%Pilot matrix X
+Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
+X = At * Xa;
 
  %%%%%%%%%
  Y=[];
@@ -83,20 +87,18 @@ Noise = sqrt(.5) .* ( randn( size(Y) ) + 1i *randn( size(Y) ) );
 Y = Y + Noise;
 
 
-%===========================================
-%Beggining of the algorithm
+%============== Beggining of the algorithm ========================
+
 
     %step1
     %Calculate hat amounts
     X_hat = sqrt(M/(P*T)) .* (X' *At);
-    H_hat = Hw' ;
 
     Y_hat=[];
     for j=1:K
         Y_hat(:,j*N-1:j*N) = sqrt(M/(P*T)) .* ( Y(j*N-1:j*N,:)' *Ar);
     end
 
-    %N_hat = sqrt(M/(P*T)) .* N' *Ar;
 
     %step2(Common support identification)
     R = Y_hat ;
@@ -112,59 +114,59 @@ Y = Y + Noise;
             Ft = [];
             rm = R(:,j*N-(N-1):j*N);
         
-            %find the sc - |Omegac_est| columns we need
+            %find the Si - |Omegac_est| columns we need
             it=0;
             while(1)
-            it=it+1;    %iterations
+                it=it+1;    %iterations
             
-            %Modified OMP to solve problem at A for 1 user            
-            for l=1:M
-                tmp1(l) = norm( X_hat(:,l)' *rm ) /norm(X_hat(:,l)) ; 
-            end 
+                %Modified OMP to solve problem at A for 1 user            
+                for l=1:M
+                    tmp1(l) = norm( X_hat(:,l)' *rm ) /norm(X_hat(:,l)) ; 
+                end 
         
-            [value , index] = max(tmp1);
-            indexes = [indexes index];           
-            Ft = [Ft X_hat(:,index)];       
-            x2t = pinv(Ft) * R(:,j*N-(N-1):j*N);
-            at = Ft * x2t;
-            rm = R(:,j*N-(N-1):j*N) - at;
+                [value , index] = max(tmp1);
+                indexes = [indexes index];           
+                Ft = [Ft X_hat(:,index)];       
+                x2t = pinv(Ft) * R(:,j*N-(N-1):j*N);
+                at = Ft * x2t;
+                rm = R(:,j*N-(N-1):j*N) - at;
             
-            if( norm(rm)<10^-6 )
-                break
-            end
+                if( norm(rm)<10^-6 )
+                    break
+                end
             end     
                 
         
-                %====== B (Support pruning)
-                l=[];
-                for i=1:length(indexes)
-                    if(  norm(X_hat(:,indexes)' * R(:,j*N-1:j*N) , 'fro')^2 >= (eta1*N) ) 
-                        l = [l indexes(i)]; 
-                    end    
-                end
+            %====== B (Support pruning)
+            l=[];
+            for i=1:length(indexes)
+               if(  norm(X_hat(:,indexes)' * R(:,j*N-1:j*N) , 'fro')^2 >= (eta1*N) ) 
+                  l = [l indexes(i)]; 
+               end    
+           end
         
-                %the following if/else is implementing the step C(Support Update)
-                %update paths and times matrices
-                if( isempty(paths) )
-                    paths = l;
-                    times = ones( 1,length(paths) );
-                else
-                    for i=1:length(l) %for each element in vector l
-                        flag = 0;
-                        for ii = 1:length(paths)
-                            if ( paths(1,ii) == l(i) ) %if the path allready exists
-                                times(1,ii) = times(1,ii)+1;
-                                flag =1;  
-                            end %end if
-                        end %endfor paths matrix 
+            %the following if/else is implementing the step C(Support Update)
+            %update paths and times matrices
+            if( isempty(paths) )
+                paths = l;
+                times = ones( 1,length(paths) );
+            else
+                for i=1:length(l) %for each element in vector l
+                   flag = 0;
+                   for ii = 1:length(paths)
+                      if ( paths(1,ii) == l(i) ) %if the path allready exists
+                         times(1,ii) = times(1,ii)+1;
+                         flag =1;  
+                      end %end if
+                   end %endfor paths matrix 
                
-                        % l(i) is not in paths matrix
-                        if( not(flag) )
-                            paths = [paths l(i)];
-                            times = [times 1];
-                        end    
-                    end %endfor l matrix            
-                end %end if
+                   % l(i) is not in paths matrix
+                   if( not(flag) )
+                      paths = [paths l(i)];
+                      times = [times 1];
+                   end    
+                end %endfor l matrix            
+            end %end if
         end %end for all users
     
         %======= C(Support Update)
@@ -227,22 +229,19 @@ Y = Y + Noise;
             R(:, i*N-(N-1):i*N) = (diag(ones(length(X_hat(:,1)) ,1)) - L ) *Y_hat(:, i*N-(N-1):i*N);
     
     
-%             %terminating conditions
-%             if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
-%                 break;
-%             end
-%         
+            %terminating conditions
+            if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
+                break;
+            end
+        
             if( t >= (s - sc) )
                 break;
             end 
         end %end while  
     
         %update Omega-_est matrix
-        if( isempty(Omegai_est) )
-            Omegai_est = {Omega_vector};
-        else
-            Omegai_est = [Omegai_est; {Omega_vector}];
-        end
+        Omegai_est = [Omegai_est; {Omega_vector}];
+        
     
     end %end for
 

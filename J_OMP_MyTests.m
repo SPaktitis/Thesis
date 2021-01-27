@@ -2,18 +2,18 @@ clc;
 clear;
 
 M=       160;              %transmit antennas
-N=       2;                %receive antennas
+N=       3;                %receive antennas
 K=       40;               %number of users
-sc=      9;                %common sparsity parameter
+sc=      9;              %common sparsity parameter
 s=       17;               %individual sparsity parameter
 SNR_dB=  28;               %transmit SNR in dB
 eta1=    0.2;              %parameters used 
 eta2=    2;                %in JOMP alg.
-Dt=      1/2;             %antenna spacing
-Dr=      1/2;             %antennas spacing
-Lt=      round(M/2);      %Transmit antenna length 
-Lr=      round(N/2);      %Receive antenna length
-T=30;                     %number of pilot symbols
+Dt=      1/2;              %antenna spacing
+Dr=      1/2;              %antennas spacing
+Lt=      round(M/2);       %Transmit antenna length 
+Lr=      round(N/2);       %Receive antenna length
+T=45;                      %number of pilot symbols
 
 
 NMSE = [];
@@ -48,16 +48,21 @@ for k=1:N
 end
 
 
-for lamda=1:100
+%for lamda=1:100
 
 %Creation of the concatenated 
 %Channel matrix Hw for K users
 Hw      =  zeros(N*K,M);
-Omegai  =  randi([1 M],K,s-sc);
-Omegac  = unique( randi([1 M],sc,1), 'sorted' );
-for i=1:K   
-   Hw(i*N-(N-1):i*N , Omegai(i,:))  = sqrt(.5) * ( randn(N,length(Omegai(i,:))) +...
-                                             1i *randn( N,length(Omegai(i,:)) ) );
+Omegai  = {};
+Omegac  = unique( randi([1 M],randi([sc sc+2]),1), 'sorted' );
+for i=1:K
+   %the 2 lines of code bellow are used to generate a sparsity value around the given
+   %boundary with a small but completely specified variance
+   temp = randi([1 M],1,randi([s-2 s],1,1) - length(Omegac) ) ;
+   Omegai  = [Omegai;  {temp} ];
+   
+   Hw(i*N-(N-1):i*N , temp)  = sqrt(.5) * ( randn(N,length( temp )) +...
+                                             1i *randn( N,length( temp ) ) );
 
    Hw(i*N-(N-1):i*N , Omegac(:))    = sqrt(.5) * ( randn(N,length(Omegac)) +...
                                            1i *randn( N,length(Omegac) ) );
@@ -70,43 +75,37 @@ for i=1:K
     H = [H; Ar * Hw(i*N-(N-1):i*N,:) * At' ];
 end
 
-%Pilot matrix X
+%Pilot matrix X ( packet )
 Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
 X = At * Xa;
   
- %%%%%%%%%
+ %%%% Noisy channel output %%%%%
  Y = zeros(N*K,T);
  Noise = sqrt(.5) .* ( randn( size(Y) ) + 1i *randn( size(Y) ) );
  for i=1:K
     Y(i*N-(N-1):i*N,:) = H(i*N-(N-1):i*N,:) * X + Noise(i*N-(N-1):i*N,:) ; 
  end  
  
-%  Y=[];   
-%  for i=1:K
-%     Y(i*N-(N-1):i*N,:) = H(i*N-(N-1):i*N,:) * X; 
-%  end 
-% Noise = sqrt(.5) .* ( randn( size(Y) ) + 1i *randn( size(Y) ) );
-% 
-% Y = Y + Noise;
 
-%===========================================
-%Beggining of the algorithm
+
+%=============  Beggining of the algorithm   ==============================
+
 
 %step1
 %Calculate hat amounts
 X_hat = sqrt(M/(P*T)) .* (X' *At);
-H_hat = Hw' ;
+%H_hat = Hw' ;
 
-Noise_hat =[];
 
 Y_hat=[];
+%N_hat=[];
 for i=1:K
     Y_hat(:,i*N-(N-1):i*N) = sqrt(M/(P*T)) .* ( Y(i*N-(N-1):i*N,:)' *Ar);
+    %N_hat( :,i*N-(N-1):i*N ) = sqrt( M/(P*T) ) * Noise( i*N-(N-1):i*N,: )' *Ar ;
+    
+    %Y_hat(:,i*N-(N-1):i*N) = X_hat * H_hat( :,i*N-(N-1):i*N ) + N_hat( :,i*N-(N-1):i*N ) ;
 end
 
-%[Qf,Rf] = QR_factorization(X_hat);
-
-%N_hat = sqrt(M/(P*T)) .* N' *Ar;
 
 %step2(Common support identification)
 R =  Y_hat ;
@@ -221,7 +220,7 @@ for i=1:K %for all users
     t=0;    %iterations counter   
     while (1)
         t=t+1;
-        %Alfa(Upport Update)       
+        %Alfa(Support Update)       
         tmp=[];
         for j=1:M
             tmp(j) = norm( X_hat(:,j)' *R(:, i*N-(N-1):i*N) ) /norm(X_hat(:,j));
@@ -236,10 +235,10 @@ for i=1:K %for all users
         R(:, i*N-(N-1):i*N) = (diag(ones(length(X_hat(:,1)) ,1)) - L ) *Y_hat(:, i*N-(N-1):i*N);
     
     
-%         %terminating conditions
-%         if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
-%             break;
-%         end
+        %terminating conditions
+        if( norm(R(:, i*N-(N-1):i*N), 'fro')^2 <= (eta2 * N *M)/P )
+            break;
+        end
         
         if( t >= (s - sc) )
             break;
@@ -248,12 +247,9 @@ for i=1:K %for all users
         
     end %end while  
     
-    %update Omega-_est matrix
-    if( isempty(Omegai_est) )
-        Omegai_est = {Omega_vector};
-    else
-        Omegai_est = [Omegai_est; {Omega_vector}];
-    end
+    %update Omegai_est matrix
+    Omegai_est = [Omegai_est; {Omega_vector}];
+    
     
 end %end for
 fprintf("End of the calculations \n Norm of the residual before calculate channel matrix is: "+norm(R)+ "\n");
@@ -266,7 +262,7 @@ for i=1:K
    
    vector = cell2mat(Omegai_est(i,1));
    
-   H_est_hat(sort(vector) , i*N-(N-1):i*N ) = pinv( X_hat(:,sort(vector) ) ) * Y_hat(: ,i*N-(N-1):i*N) ;
+   H_est_hat( sort(vector) , i*N-(N-1):i*N ) = pinv( X_hat(:, sort(vector) ) ) * Y_hat(: ,i*N-(N-1):i*N) ;
    
    H_est(i*N-(N-1):i*N,:) = Ar * H_est_hat(:,i*N-(N-1):i*N)' * At' ;
    
@@ -276,10 +272,10 @@ end
 %=========== NMSE
 %norm( H - H_est , 'fro')^2 / norm( H, 'fro' )^2
 NMSE = [NMSE norm( H - H_est , 'fro')^2 / norm( H, 'fro' )^2];
-end
+%end
 fprintf("CSIT = "+sum(NMSE)/lamda+"\n");
 
-
-
-
+for i=1:K
+    norm( H(i*N-(N-1):i*N,:) - H_est(i*N-(N-1):i*N,:) , 'fro')^2 / norm( H(i*N-(N-1):i*N,:), 'fro' )^2
+end
 
