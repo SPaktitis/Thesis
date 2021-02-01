@@ -1,5 +1,5 @@
 clc;
-clear;
+clear; 
 %OMP tryouts with real variables
 
 %variales
