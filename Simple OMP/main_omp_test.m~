@@ -1,29 +1,9 @@
 clc;
 clear;
 
-%OMP tryouts with real variables
-
-%variales
-m = 40;   %sparsity lvl
-N = 200;   
-d = 800;
-s = zeros(d,1); %arbitrary signal to recover
-%----manualy creating the sparse signal---------
-vector = randi([1 , d],m,1); %for easy check at sparsity indexes
-
-s(vector,1) = randi([1, 100],m,1);
-
-%-------------------------------------------
-
-%Ft einai o pinakas pou dhmiourgw mesa sta loops...
-%making of the mesurement matrix Fi
-%with Normal Distribution
-clc;
-clear;
-
 d = 256;
 m = [4 12 20 28 36];
-N = 4:250;
+N = 10:50:251;
 figure;
 
 for j = m
@@ -34,15 +14,14 @@ for j = m
         for k=1:10^3
             s = zeros(d,1);
             indexes = randi([1 , d],j,1); %for easy check at sparsity indexes
-            s(indexes,1) = randi([1, d],j,1);
-            %Fi = normrnd(0,1/i,i,d);
+            s(indexes,1) = 1; %randi([1, d],j,1);
+            %F = normrnd(0,1/i,i,d);
             F = 1/sqrt(i) .* sign( randn(i,d) );
             u = F*s;
-        
-        
+                
             [s_hat taph] = OMP_func(F,u,j);
             
-            if( norm( s-s_hat )< 10^-3 )
+            if( norm(s-s_hat)^2 < 10^-4 )
                 count = count +1;
             end
              

@@ -3,9 +3,9 @@ clear;
 %OMP tryouts with real variables
 
 %variales
-m=40;   %sparsity lvl
-N=200;   
-d=800;
+m = 4;%40;   %sparsity lvl
+N = 50;%200;   
+d = 256;%800;
 s=zeros(d,1); %arbitrary signal to recover
 %----manualy creating the sparse signal---------
 vector = randi([1 , d],m,1); %for easy check at sparsity indexes
