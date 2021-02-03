@@ -266,5 +266,5 @@ Y = Y + Noise;
     
 end
 
-CSIT = sum(NMSE)/lamda;
+CSIT = sum(NMSE)/pkt_num;
 end

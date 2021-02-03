@@ -1,16 +1,29 @@
 clc;
 clear; 
 %OMP tryouts with real variables
+figure;
 
+M = [4 12 20 28 36];
+n = 1:5:260 ;
+
+for kk = M
+percent = [];
+for jj = n
+count=0;
+taph =[];  
+
+
+for ii=1:10^3
+    
 %variales
-m = 4;%40;   %sparsity lvl
-N = 50;%200;   
-d = 256;%800;
-s=zeros(d,1); %arbitrary signal to recover
+m = kk;          %40;   %sparsity lvl
+N = jj;    %75;         %200;   
+d = 256;        %800;
+s=zeros(d,1);   %arbitrary signal to recover
 %----manualy creating the sparse signal---------
-vector = randi([1 , d],m,1); %for easy check at sparsity indexes
+indexes = randi([1 , d],m,1); %for easy check at sparsity indexes
 
-s(vector,1) = randi([1, 100],m,1);
+s(indexes,1) = 1;%randi([1, 100],m,1);
 
 %-------------------------------------------
 
@@ -21,11 +34,11 @@ Fi = normrnd(0,1/N,N,d);
 
 
 %step 1
-L=[];        %Index set of lt(lamda taf)
-u = Fi*s;
-rm=u;       %arxikopoihsh residual 
-t=0;        %iterations
-Ft=[];
+L  = [];        %Index set of lt(lamda taf)
+u  = Fi*s;
+rm = u;         %arxikopoihsh residual 
+t  = 0;         %iterations
+Ft = [];
 
 while (1)
     t=t+1;
@@ -68,15 +81,28 @@ for i=1:t
     s_hat(L(i,1),1) = xt(i);
 end
 
+taph = [taph; t];
+
+if ( norm( s-s_hat )< 10^-5 )
+    count = count + 1;
+end 
 
 
+end
+
+fprintf("success percentage: "+count/10+"   ");
+fprintf("iterations percentage: "+sum(taph)/1000+"\n");
+
+percent = [percent count/10];
 
 
+end
 
-
-
-
-
-
-
-
+plot(n,percent);
+hold on;
+end
+hold off;
+legend('m=4','m=12','m=20','m=28','m=36');
+ylabel("% recovered signals");
+xlabel("Number of measurements (N)");
+title("% of input signals recovered correctly (d=256)");

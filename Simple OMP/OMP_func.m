@@ -46,7 +46,7 @@ for ii=1:m
 end
 
 s_hat = zeros(d,1);
-for i = 1:m %length( L(:,1) )
+for i = 1:t %length( L(:,1) )
     s_hat( L(i,1),1 ) = xt(i);
 end
 
