@@ -17,13 +17,13 @@ for ii=1:10^3
     
 %variales
 m = kk;          %40;   %sparsity lvl
-N = jj;    %75;         %200;   
-d = 256;        %800;
-s=zeros(d,1);   %arbitrary signal to recover
+N = jj;          %75;         %200;   
+d = 256;         %800;
+s = zeros(d,1);  %arbitrary signal to recover
 %----manualy creating the sparse signal---------
 indexes = randi([1 , d],m,1); %for easy check at sparsity indexes
 
-s(indexes,1) = 1;%randi([1, 100],m,1);
+s(indexes,1) = sqrt(.5).*( randn(m,2) + 1i*randn(m,2) );%1;%randi([1, 100],m,1);
 
 %-------------------------------------------
 
@@ -46,7 +46,7 @@ while (1)
     %step 2
     tmp = zeros(d,1);
     for i=1:d
-        tmp(i,1)=abs(dot(rm,Fi(:,i))); 
+        tmp(i,1)=abs( dot( rm,Fi(:,i) ) ); 
     end
     
     [M,lt] = max(tmp);
@@ -106,3 +106,5 @@ legend('m=4','m=12','m=20','m=28','m=36');
 ylabel("% recovered signals");
 xlabel("Number of measurements (N)");
 title("% of input signals recovered correctly (d=256)");
+
+

@@ -53,6 +53,7 @@ for pkt_num=1:200
 Hw      =  zeros(N*K,M);
 Omegai  = {};
 Omegac  = unique( randi([1 M],randi([sc sc+2]),1), 'sorted' );
+
 for i=1:K
    %the 2 lines of code bellow are used to generate a sparsity value around the given
    %boundary with a small but completely specified variance

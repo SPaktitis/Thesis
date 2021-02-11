@@ -5,8 +5,7 @@ function er = Er( Omega, nt, Dt )
 
     e=[];
     for ii=1:nt
-        tmp1 = exp(-1i*2*pi*(ii-1)*Dt*Omega);
-        e = [e;    tmp1];
+        e = [e;    exp(-1i*2*pi*(ii-1)*Dt*Omega) ];
     end
     er = 1/sqrt(nt) .* e;
 
