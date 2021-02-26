@@ -46,13 +46,14 @@ for k=1:N
 end
 
 
-for lamda=1:100 %pkts
+for pkt_num=1:100 %pkts
     
 %Creation of the concatenated 
 %Channel matrix Hw for K users
 Hw      =  zeros(N*K,M);
 Omegai  = {};
 Omegac  = unique( randi([1 M],randi([sc sc+2]),1), 'sorted' );
+
 for i=1:K
    %the 2 lines of code bellow are used to generate a sparsity value around the given
    %boundary with a small but completely specified variance
@@ -171,7 +172,7 @@ Y = Y + Noise;
     
         %======= C(Support Update)
         [value , index] = max(times);
-        %bellow is a some code to deal with a situational problems
+        %bellow is some code to deal with a situational problems
         %where the last support index is not retrieved correctly
         if( not(isempty(Omegac_est)) )
            t=1;
@@ -230,7 +231,7 @@ Y = Y + Noise;
     
     
             %terminating conditions
-            if( norm(R(:, i*N-1:i*N), 'fro')^2 <= (eta2 * N *M)/P )
+            if( norm(R(:, i*N-(N-1):i*N), 'fro')^2 <= (eta2 * N *M)/P )
                 break;
             end
         
@@ -262,7 +263,7 @@ Y = Y + Noise;
 
 
     %=========== NMSE
-    NMSE=[NMSE norm( H - H_est, 'fro' )^2 / norm( H, 'fro' )^2];
+    NMSE = [NMSE norm( H - H_est, 'fro' )^2 / norm( H, 'fro' )^2];
     
 end
 

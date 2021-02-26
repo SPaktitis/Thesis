@@ -12,7 +12,7 @@ eta2=    2;                %in JOMP alg.
 Dt=      1/2;              %antenna spacing
 Dr=      1/2;              %antennas spacing
 Lt=      round(M/2);       %Transmit antenna length 
-Lr=      round(N/2);       %Receive antenna length
+Lr=      1.5;%round(N/2);       %Receive antenna length
 T=45;                      %number of pilot symbols
 
 
@@ -48,13 +48,13 @@ for k=1:N
 end
 
 
-%for lamda=1:100
+for pkt_num=1:100
 
 %Creation of the concatenated 
 %Channel matrix Hw for K users
 Hw      =  zeros(N*K,M);
 Omegai  = {};
-Omegac  = unique( randi([1 M],randi([sc sc+2]),1), 'sorted' );
+Omegac  = unique( randi([1 M],randi([sc sc+2]),1), 'sorted');
 for i=1:K
    %the 2 lines of code bellow are used to generate a sparsity value around the given
    %boundary with a small but completely specified variance
@@ -79,13 +79,14 @@ end
 Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
 X = At * Xa;
   
- %%%% Noisy channel output %%%%%
- Y = zeros(N*K,T);
- Noise = sqrt(.5) .* ( randn( size(Y) ) + 1i *randn( size(Y) ) );
+ %%%% noisy channel output %%%%%
+ Y=[];
  for i=1:K
-    Y(i*N-(N-1):i*N,:) = H(i*N-(N-1):i*N,:) * X + Noise(i*N-(N-1):i*N,:) ; 
- end  
- 
+    Y(i*N-(N-1):i*N,:) = H(i*N-(N-1):i*N,:) * X; 
+ end              
+
+Noise = sqrt(.5) .* ( randn( size(Y) ) + 1i *randn( size(Y) ) );
+Y = Y + Noise;
 
 
 %=============  Beggining of the algorithm   ==============================
@@ -93,22 +94,22 @@ X = At * Xa;
 
 %step1
 %Calculate hat amounts
+
 X_hat = sqrt(M/(P*T)) .* (X' *At);
-%H_hat = Hw' ;
 
-
+Noise_hat=[];
 Y_hat=[];
-%N_hat=[];
 for i=1:K
-    Y_hat(:,i*N-(N-1):i*N) = sqrt(M/(P*T)) .* ( Y(i*N-(N-1):i*N,:)' *Ar);
-    %N_hat( :,i*N-(N-1):i*N ) = sqrt( M/(P*T) ) * Noise( i*N-(N-1):i*N,: )' *Ar ;
-    
-    %Y_hat(:,i*N-(N-1):i*N) = X_hat * H_hat( :,i*N-(N-1):i*N ) + N_hat( :,i*N-(N-1):i*N ) ;
+    Noise_hat(:,i*N-(N-1):i*N) = sqrt(M/(P*T)) .* ( Noise(i*N-(N-1):i*N,:)' *Ar);
+    Y_hat(:,i*N-(N-1):i*N) = sqrt(M/(P*T)) .* ( Y(i*N-(N-1):i*N,:)' *Ar) + Noise_hat(:,i*N-(N-1):i*N);
 end
 
 
+
+
+
 %step2(Common support identification)
-R =  Y_hat ;
+R = Y_hat ;
 Omegac_est = [];
 
 for k = 1:sc
@@ -252,7 +253,7 @@ for i=1:K %for all users
     
     
 end %end for
-fprintf("End of the calculations \n Norm of the residual before calculate channel matrix is: "+norm(R)+ "\n");
+
     
 %============== STEP4 ===================
 H_est = zeros(N*K,M);
@@ -272,8 +273,9 @@ end
 %=========== NMSE
 %norm( H - H_est , 'fro')^2 / norm( H, 'fro' )^2
 NMSE = [NMSE norm( H - H_est , 'fro')^2 / norm( H, 'fro' )^2];
-%end
-fprintf("CSIT = "+sum(NMSE)/lamda+"\n");
+fprintf("End of the calculations \n NMSE is: "+NMSE(end)+ "\n");
+end
+fprintf("CSIT = "+sum(NMSE)/pkt_num+"\n");
 
 for i=1:K
     norm( H(i*N-(N-1):i*N,:) - H_est(i*N-(N-1):i*N,:) , 'fro')^2 / norm( H(i*N-(N-1):i*N,:), 'fro' )^2

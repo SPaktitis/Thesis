@@ -57,31 +57,38 @@ H = [h1'; h2'];
 rank(H)
 
 %%%%%  Trying to reproduce the polarplot(figure 7.5)  %%%%%
-Lr = 16;
-nr = 32;
+Lr = 8;
+nr = 128;
 Dr = Lr/nr;
-phi = 0:.01:2*pi
+phi = -2*pi:.01:2*pi ;
 
-phi0 = pi/2;
-figure;
-for i=1:nr-1
+phi0 = 0;
+
+%for i=1:nr
     
-er1 =  Er( (i-1)/Lr ,nr,Dr);   %Er(cos(phi0),nr,Dr);
+er1 = Er(cos(phi0),nr,Dr);  %Er( (i-1)/Lr ,nr,Dr);   
 
 vector=[];
+amount = [];
+Omega_r = [];
 
 for i = phi
    er2 =  Er(cos(i),nr,Dr) ;
-   vector = [vector;  er1' * er2 ];
+   vector = [vector; er1' * er2 ];
+   
+   Omega_r = [Omega_r (cos(i) - cos(phi0)) ];
+   amount =[amount abs( sin( pi*Lr*Omega_r(end)) /( nr*sin( pi*Lr*Omega_r(end)/nr ) ) )];
    
 end
 
 
+figure;
+plot(phi,vector);
 
-polarplot(phi,vector);
-hold on;
-end
-hold off;
+plot(phi,Omega_r);
+%hold on;
+%end
+%hold off;
 title(['Lr=', num2str(Lr),',n_r =',num2str(nr)]);
 legend()
 %ylim( [0 1] )

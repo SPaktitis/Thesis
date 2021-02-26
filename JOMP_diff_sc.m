@@ -3,16 +3,16 @@ function CSIT = JOMP_diff_sc(Sc)
 M      =160;           %transmit antennas
 N      =2;             %receive antennas
 K      =40;            %number of users
-sc     =Sc;             %common sparsity parameter
+sc     =Sc;            %common sparsity parameter
 s      =17;            %individual sparsity parameter
-SNR_dB =28;           %transmit SNR in dB
+SNR_dB =28;            %transmit SNR in dB
 eta1   =0.2;           %parameters used 
 eta2   =2;             %in JOMP alg.
 Dt     =1/2;           %antenna spacing
 Dr     =1/2;           %antennas spacing
-Lt     =round(M/2);    %Transmit antenna length 
-Lr     =round(N/2);    %Receive antenna length
-T      =45;             %number of pilot symbols
+Lt     =M/2;           %Transmit antenna length 
+Lr     =N/2;           %Receive antenna length
+T      =45;            %number of pilot symbols
 
 P = M * 10^(SNR_dB/10) ;    %quantity used to adjust the trasnmitt snr
 NMSE =[];
@@ -47,7 +47,7 @@ end
 
 
 
-for lamda=1:100 %pkts
+for pkt_num=1:1000 %pkts
     
 %Creation of the concatenated 
 %channel matrix Hw for K users
@@ -257,8 +257,8 @@ end
     end
 
     %=========== NMSE
-    NMSE= norm( H - H_est, 'fro' ).^2 / norm( H, 'fro' ).^2;
+    NMSE= [NMSE norm( H - H_est, 'fro' )^2 / norm( H, 'fro' )^2];
 end
-    CSIT = sum(NMSE)/lamda;
+    CSIT = sum(NMSE)/pkt_num;
 
 end

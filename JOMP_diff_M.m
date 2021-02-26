@@ -46,7 +46,7 @@ for k=1:N
 end
 
 
-for pkt_num=1:200 %pkts
+for pkt_num=1:100 %pkts
     
 %Creation of the concatenated 
 %Channel matrix Hw for K users

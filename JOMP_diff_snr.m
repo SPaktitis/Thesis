@@ -10,8 +10,8 @@ eta1   =0.2;           %parameters used
 eta2   =2;             %in JOMP alg.
 Dt     =1/2;           %antenna spacing
 Dr     =1/2;           %antennas spacing
-Lt     =round(M/2);    %Transmit antenna length 
-Lr     =round(N/2);    %Receive antenna length
+Lt     =M/2;           %Transmit antenna length 
+Lr     =N/2;           %Receive antenna length
 T      =45;             %number of pilot symbols
 
 P = M * 10^(SNR_dB/10) ;    %quantity used to adjust the trasnmitt snr
@@ -46,7 +46,7 @@ for k=1:N
 end
 
 
-for pkt_num=1:200
+for pkt_num=1:1000
 
 %Creation of the concatenated 
 %Channel matrix Hw for K users
@@ -85,6 +85,8 @@ X = At * Xa;
     Y(i*N-(N-1):i*N,:) = H(i*N-(N-1):i*N,:) * X + Noise(i*N-(N-1):i*N,:) ; 
  end 
 
+
+
 %================ Beggining of the algorithm ==========================
 %
 
@@ -100,6 +102,13 @@ X = At * Xa;
         %N_hat( :,i*N-(N-1):i*N ) = sqrt( M/(P*T) ) * Noise( i*N-(N-1):i*N,: )' *Ar ;   
         %Y_hat(:,i*N-(N-1):i*N) = X_hat * H_hat( :,i*N-(N-1):i*N ) + N_hat( :,i*N-(N-1):i*N ) ;
     end
+
+% Noise_hat=[];
+% Y_hat=[];
+% for i=1:K
+%     Noise_hat(:,i*N-(N-1):i*N) = sqrt(M/(P*T)) .* ( Noise(i*N-(N-1):i*N,:)' *Ar);
+%     Y_hat(:,i*N-(N-1):i*N) = sqrt(M/(P*T)) .* ( Y(i*N-(N-1):i*N,:)' *Ar) + Noise_hat(:,i*N-(N-1):i*N);
+% end
 
     %step2(Common support identification)
     R = Y_hat ;
@@ -263,7 +272,7 @@ X = At * Xa;
 
 
     %=========== NMSE
-    NMSE=[NMSE norm( H - H_est, 'fro' ).^2 / norm( H, 'fro' ).^2];
+    NMSE=[NMSE norm( H - H_est, 'fro' )^2 / norm( H, 'fro' )^2];
     
 end
     CSIT = sum(NMSE)/pkt_num;

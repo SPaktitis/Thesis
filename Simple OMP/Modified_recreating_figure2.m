@@ -1,15 +1,20 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   Auto pou alazei edw einai pws to correct recovery tou signal ginetai
+%   me vash th swsth anagnwrish twn mh mhdenikwn 8esewn
+
+
 clc;
 clear; 
 %OMP tryouts with real variables
 figure;
-dim = 3;
+dim = 1;
 
-sparsity = [4 12 20 28 36];
-n = 1:5:260 ;
+sparsity = 0:5:80;
+n = [52 100 148 196 244] ;
 
-for kk = sparsity
-percent = [];
 for jj = n
+percent = [];
+for kk = sparsity
 count = 0;
 taph  = [];  
 
@@ -17,14 +22,14 @@ taph  = [];
 for ii = 1:10^3
     
 %variales
-m = kk;       %kk;          %40;   %sparsity lvl
+m = kk;          %kk;          %40;   %sparsity lvl
 N = jj;          %75;         %200;   
 d = 256;         %800;
 s = zeros(d,dim);   %arbitrary signal to recover
 %----manualy creating the sparse signal---------
 indexes = randi([1 , d],m,1); %for easy check at sparsity indexes
 
-s( indexes,1:dim ) = sqrt(.5).*( randn(m,dim) + 1i*randn(m,dim) );%1;%randi([1, 100],m,1);
+s( indexes,1:dim ) = 1; %sqrt(.5).*( randn(m,dim) + 1i*randn(m,dim) );;%randi([1, 100],m,1);
 
 %-------------------------------------------
 
@@ -41,13 +46,13 @@ rm = u;         %arxikopoihsh residual
 t  = 0;         %iterations
 Ft = [];
 
-while (1)
-    t=t+1;
+for it = 1:kk
+    %t=t+1;
     
     %step 2
     tmp = zeros(d,1);
     for i = 1:d
-        tmp(i,1)=  norm( Fi(:,i)' *rm ) /norm( Fi(:,i) ); %abs( dot( rm,Fi(:,i) ) );  %norm( X_hat(:,l)' *rm ) /norm(X_hat(:,l))
+        tmp(i,1)=   abs( dot( rm,Fi(:,i) ) ); %norm( Fi(:,i)' *rm ) /norm( Fi(:,i) );   %norm( X_hat(:,l)' *rm ) /norm(X_hat(:,l))
     end
     
     [M,lt] = max(tmp);
@@ -70,10 +75,10 @@ while (1)
     am = Ft * xt;
     rm = u - am;
     
-    %break when the residual's norm is smaller than a certain threshold
-    if( norm(rm) < 10^-8)
-        break;
-    end 
+%     %break when the residual's norm is smaller than a certain threshold
+%     if( norm(rm) < 10^-8)
+%         break;
+%     end 
     
 end
 
@@ -84,7 +89,10 @@ end
 
 taph = [taph; t];
 
-if ( norm( s-s_hat )< 10^-5 )
+%correctly recovered signal
+test_vec = zeros(d,dim);
+test_vec( L(:),: ) = 1;
+if (  (s-test_vec) == 0 )
     count = count + 1;
 end 
 
@@ -99,7 +107,7 @@ percent = [percent count/10];
 
 end
 
-plot(n,percent);
+plot(sparsity,percent,'-o');
 hold on;
 end
 hold off;
@@ -107,8 +115,3 @@ legend('m=4','m=12','m=20','m=28','m=36');
 ylabel("% recovered signals");
 xlabel("Number of measurements (N)");
 title("% of input signals recovered correctly (d=256)");
-
-
-
-
-

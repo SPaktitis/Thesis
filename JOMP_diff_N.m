@@ -10,8 +10,8 @@ eta1   =0.2;           %parameters used
 eta2   =2;             %in JOMP alg.
 Dt     =1/2;           %antenna spacing
 Dr     =1/2;           %antennas spacing
-Lt     =round(M/2);    %Transmit antenna length 
-Lr     =round(N/2);    %Receive antenna length
+Lt     =M/2;           %Transmit antenna length 
+Lr     =N/2;           %Receive antenna length
 T      =45;            %number of pilot symbols
 
 P = M * 10^(SNR_dB/10) ;    %quantity used to adjust the trasnmitt snr
@@ -46,7 +46,7 @@ for k=1:N
 end
 
 
-for pkt_num=1:200
+for pkt_num=1:1000
     
 %Creation of the concatenated 
 %Channel matrix Hw for K users
@@ -79,11 +79,14 @@ Xa = sqrt(P/M) .* (sign(2*rand(M,T)-1)) ;
 X = At * Xa;
 
  %%%%%%%%%
- Y = zeros(N*K,T);
- Noise = sqrt(.5) .* ( randn( size(Y) ) + 1i *randn( size(Y) ) );
+ %%%%%%%%%
+ Y=[];
  for i=1:K
-    Y(i*N-(N-1):i*N,:) = H(i*N-(N-1):i*N,:) * X + Noise(i*N-(N-1):i*N,:) ; 
- end 
+    Y(i*N-(N-1):i*N,:) = H(i*N-(N-1):i*N,:) * X; 
+ end              
+
+Noise = sqrt(.5) .* ( randn( size(Y) ) + 1i *randn( size(Y) ) );
+Y = Y + Noise;
 
 %=============== Beggining of the algorithm ===================%
 
@@ -91,7 +94,6 @@ X = At * Xa;
     %========step1
     %Calculate hat amounts
     X_hat = sqrt(M/(P*T)) .* (X' *At);
-    %H_hat = Hw' ;
 
     Y_hat=[];
     for j=1:K
@@ -260,7 +262,7 @@ X = At * Xa;
 
 
     %=========== NMSE
-    NMSE=[NMSE norm( H - H_est, 'fro' )^2 / norm( H, 'fro' )^2];
+    NMSE = [NMSE norm( H - H_est, 'fro' )^2 / norm( H, 'fro' )^2];
     
 end
 

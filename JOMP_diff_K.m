@@ -263,7 +263,7 @@ end
 
 
     %=========== NMSE
-    NMSE= norm( H - H_est, 'fro' ).^2 / norm( H, 'fro' ).^2;
+    NMSE= [NMSE norm( H - H_est, 'fro' )^2 / norm( H, 'fro' )^2];
 end
     CSIT = sum(NMSE)/pkt_num;
 
