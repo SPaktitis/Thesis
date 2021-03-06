@@ -10,9 +10,9 @@ eta1   =0.2;           %parameters used
 eta2   =2;             %in JOMP alg.
 Dt     =1/2;           %antenna spacing
 Dr     =1/2;           %antennas spacing
-Lt     =round(M/2);    %Transmit antenna length 
-Lr     =round(N/2);    %Receive antenna length
-                     %number of pilot symbols
+Lt     =M/2;           %Transmit antenna length 
+Lr     =N/2;           %Receive antenna length
+                     
                      
 NMSE =[];
 P = M * 10^(SNR_dB/10) ;    %quantity used to adjust the trasnmitt snr
@@ -46,7 +46,7 @@ for k=1:N
 end
 
 
-for pkt_num=1:100 %pkts
+for pkt_num=1:1000 %pkts
     
 %Creation of the concatenated 
 %Channel matrix Hw for K users

@@ -59,23 +59,23 @@
 % ylabel("NMSE of CSIT");
 % 
 % %%%%%%%%%% Different individual support S %%%%%%%%%%%%%%%%%%%
-clc;
-clear;
- 
-NMSE_diff_s =[];
-s = 14:20;
-for i = 16:20
-    CSIT = JOMP_diff_s( i );
-    NMSE_diff_s = [NMSE_diff_s CSIT] ;
-    fprintf("S ="+i+", CSIT= "+CSIT+"\n" );
-end
-
-figure;
-semilogy(s,NMSE_diff_s);
-axis([14 20 0.0001 1])
-title("NMSE of CSIT Versus S")
-xlabel("S (individual sparsity)");
-ylabel("NMSE of CSIT");
+% clc;
+% clear;
+%  
+% NMSE_diff_s =[];
+% s = 14:20;
+% for i = s
+%     CSIT = JOMP_diff_s( i );
+%     NMSE_diff_s = [NMSE_diff_s CSIT] ;
+%     fprintf("S ="+i+", CSIT= "+CSIT+"\n" );
+% end
+% 
+% figure;
+% semilogy(s,NMSE_diff_s);
+% axis([14 20 0.0001 1])
+% title("NMSE of CSIT Versus S")
+% xlabel("S (individual sparsity)");
+% ylabel("NMSE of CSIT");
 % 
 % %%%%%%%%%% Different number of users K %%%%%%%%%%%%%%%%%%%
 % clc;
@@ -91,7 +91,7 @@ ylabel("NMSE of CSIT");
 % 
 % figure;
 % semilogy(K,NMSE_diff_K);
-% axis([10 55 0.00001 1])
+% axis([10 55 0.0001 1])
 % title("NMSE of CSIT Versus K")
 % xlabel("K (number of users)");
 % ylabel("NMSE of CSIT");
@@ -116,23 +116,23 @@ ylabel("NMSE of CSIT");
 % ylabel("NMSE of CSIT");
 
 %%%%%%%%%%%% Different number of antennas(M) at the base station %%%%%%%%%%%%%%%%%%%
-% clc;
-% clear;
-% 
-% NMSE_diff_M =[]; 
-% M = 60:20:220 ;
-% for i = M
-%     CSIT = JOMP_diff_M( i );
-%     NMSE_diff_M = [NMSE_diff_M CSIT] ;
-%     fprintf("M ="+i+", CSIT= "+CSIT+"\n" );
-% end
-% 
-% figure;
-% semilogy(M,NMSE_diff_M);
-% axis([60 220 0.0001 1])
-% title("NMSE of CSIT Versus M")
-% xlabel("M (number of antennas BS)");
-% ylabel("NMSE of CSIT");
+clc;
+clear;
+
+NMSE_diff_M =[]; 
+M = 60:20:220 ;
+for i = M
+    CSIT = JOMP_diff_M( i );
+    NMSE_diff_M = [NMSE_diff_M CSIT] ;
+    fprintf("M ="+i+", CSIT= "+CSIT+"\n" );
+end
+
+figure;
+semilogy(M,NMSE_diff_M);
+axis([60 220 0.0001 1])
+title("NMSE of CSIT Versus M")
+xlabel("M (number of antennas BS)");
+ylabel("NMSE of CSIT");
 
 
 

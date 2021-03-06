@@ -10,8 +10,8 @@ eta1   =0.2;           %parameters used
 eta2   =2;             %in JOMP alg.
 Dt     =1/2;           %antenna spacing
 Dr     =1/2;           %antennas spacing
-Lt     =round(M/2);    %Transmit antenna length 
-Lr     =round(N/2);    %Receive antenna length
+Lt     =M/2;           %Transmit antenna length 
+Lr     =N/2;           %Receive antenna length
 T      =45;            %number of pilot symbols
 
 P = M * 10^(SNR_dB/10) ;    %quantity used to adjust the trasnmitt snr
@@ -47,7 +47,7 @@ end
 
 
 
-for pkt_num=1:100
+for pkt_num=1:1000
     
 
 %Creation of the concatenated 
