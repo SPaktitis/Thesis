@@ -62,7 +62,7 @@ clear;
 Lr = 8;
 nr = 4;
 Dr = Lr/nr;
-phi = 0:.01:2*pi ;
+phi = -2*pi:.01:2*pi ;
 
 phi0 = pi/2;
 
@@ -79,19 +79,21 @@ for i = phi
    vector = [vector; er1' * er2 ];
    
    Omega_r = [Omega_r (cos(i) - cos(phi0)) ];
-   amount =[amount abs( sin( pi*Lr*Omega_r(end)) /( nr*sin( pi*Lr*Omega_r(end)/nr ) ) )];
+   amount =[amount  abs( sin( pi*Lr*Omega_r(end)) /( nr*sin( pi*Lr*Omega_r(end)/nr ) ) )];
    
 end
-
+%this is prob the figure i want, but it's not complete
+figure;
+plot(Omega_r,amount,'k');
+title('n_r = 4');
+xlabel('\Omega_r')
 
 figure;
 plot(phi,vector);
 
 plot(phi,Omega_r);
 
-%this is prob the figure i want, but it's not complete
-figure;
-plot(Omega_r,amount);
+
 %hold on;
 %end
 %hold off;

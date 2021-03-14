@@ -59,7 +59,7 @@ rank(H)
 %%%%%  Trying to reproduce the polarplot(figure 7.5)  %%%%%
 clc;
 clear;
-Lr = 16;
+Lr = 8;
 nr = 64;
 Dr = Lr/nr;
 phi = -2*pi:.01:2*pi ;
@@ -84,8 +84,9 @@ for i = phi
 end
 %this is prob the figure i want, but it's not complete
 figure;
-plot(Omega_r,amount);
-
+plot(Omega_r,amount,'k');
+title(['n_r = ',num2str(nr)]);
+xlabel('\Omega_r');
 
 figure;
 plot(phi,vector);
