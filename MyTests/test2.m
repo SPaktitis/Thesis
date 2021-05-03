@@ -59,7 +59,7 @@ rank(H)
 %%%%%  Trying to reproduce the polarplot(figure 7.5)  %%%%%
 clc;
 clear;
-Lr = 8;
+Lr = 16;
 nr = 64;
 Dr = Lr/nr;
 phi = -2*pi:.01:2*pi ;
